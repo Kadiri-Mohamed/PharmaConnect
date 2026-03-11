@@ -35,8 +35,12 @@ class AuthController extends Controller
             'password' => Hash::make($data['password'])
         ]);
 
+        $token = Auth::guard('api')->login($user);
+
         return response()->json([
             'message' => 'Account created successfully',
+            'token' => $token,
+            'token_type' => 'Bearer',
             'user' => $user
         ], 201);
     }
