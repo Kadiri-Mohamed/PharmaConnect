@@ -18,8 +18,12 @@ const LoginPage = () => {
         setLoading(true);
 
         try {
-            await login({ email, password });
-            navigate('/');
+            const user = await login({ email, password });
+            if (user?.role === 'pharmacist') {
+                navigate('/dashboard/pharmacy');
+            } else {
+                navigate('/dashboard/client');
+            }
         } catch (err) {
             if (err.response?.status === 422) {
                 setError(Object.values(err.response.data.errors).flat().join(', '));

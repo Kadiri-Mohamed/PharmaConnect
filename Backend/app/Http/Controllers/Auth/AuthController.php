@@ -3,50 +3,30 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Http\Requests\RegisterRequest;
+use App\Services\Auth\AuthService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
 
-    public function signUp(Request $request)
+    public function signUp(RegisterRequest $request, AuthService $authService)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8|confirmed'
-        ]);
+        $data = $request->validated();
 
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation error',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $data = $validator->validated();
-
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password'])
-        ]);
-
-        $token = Auth::guard('api')->login($user);
+        $result = $authService->signUp($data);
 
         return response()->json([
             'message' => 'Account created successfully',
-            'token' => $token,
-            'token_type' => 'Bearer',
-            'user' => $user
+            'token' => $result['token'],
+            'token_type' => $result['token_type'],
+            'user' => $result['user']
         ], 201);
     }
 
-
-    public function signIn(Request $request)
+    public function signIn(Request $request, AuthService $authService)
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
@@ -62,17 +42,20 @@ class AuthController extends Controller
 
         $credentials = $validator->validated();
 
-        if (!$token = Auth::guard('api')->attempt($credentials)) {
+        try {
+            $result = $authService->signIn($credentials);
+
+            return response()->json([
+                'message' => 'Login successful',
+                'token' => $result['token'],
+                'token_type' => $result['token_type'],
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'message' => 'Invalid credentials'
             ], 401);
         }
-
-        return response()->json([
-            'message' => 'Login successful',
-            'token' => $token,
-            'token_type' => 'Bearer'
-        ], 200);
     }
 
 

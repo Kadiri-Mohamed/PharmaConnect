@@ -8,7 +8,8 @@ const RegisterPage = () => {
         name: '',
         email: '',
         password: '',
-        password_confirmation: ''
+        password_confirmation: '',
+        role: 'client',
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -26,8 +27,12 @@ const RegisterPage = () => {
         setLoading(true);
 
         try {
-            await register(formData);
-            navigate('/');
+            const user = await register(formData);
+            if (user?.role === 'pharmacist') {
+                navigate('/dashboard/pharmacy');
+            } else {
+                navigate('/dashboard/client');
+            }
         } catch (err) {
             if (err.response?.status === 422) {
                 // Handle validation errors from Laravel
@@ -143,6 +148,21 @@ const RegisterPage = () => {
                                     onChange={handleChange}
                                 />
                             </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="role">Role</label>
+                            <select
+                                id="role"
+                                name="role"
+                                required
+                                value={formData.role}
+                                onChange={handleChange}
+                                className="w-full rounded-lg border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                            >
+                                <option value="client">Client</option>
+                                <option value="pharmacist">Pharmacist</option>
+                            </select>
                         </div>
                     </div>
 

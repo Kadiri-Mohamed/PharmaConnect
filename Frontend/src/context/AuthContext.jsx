@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
 
@@ -29,7 +30,9 @@ export const AuthProvider = ({ children }) => {
         const { token } = response.data;
         localStorage.setItem('token', token);
         const profileResponse = await api.get('/showProfile');
-        setUser(profileResponse.data.user);
+        const user = profileResponse.data.user;
+        setUser(user);
+        return user;
     };
 
     const register = async (data) => {
@@ -37,7 +40,9 @@ export const AuthProvider = ({ children }) => {
         const { token } = response.data;
         localStorage.setItem('token', token);
         const profileResponse = await api.get('/showProfile');
-        setUser(profileResponse.data.user);
+        const user = profileResponse.data.user;
+        setUser(user);
+        return user;
     };
 
     const logout = async () => {

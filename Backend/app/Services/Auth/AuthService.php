@@ -1,10 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Auth;
 
 use App\Models\User;
-use App\DTOs\Auth\SignUpDTO;
-use App\DTOs\Auth\SignInDTO;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -14,32 +12,29 @@ class AuthService
     /**
      * Register a new user
      */
-    public function signUp(SignUpDTO $dto): array
+    public function signUp(array $data): array
     {
-        // Create user
         $user = User::create([
-            'name' => $dto->name,
-            'email' => $dto->email,
-            'password' => Hash::make($dto->password)
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
+            'role' => $data['role'] ?? 'client',
         ]);
 
-        // Generate token
         $token = Auth::guard('api')->login($user);
 
         return [
             'user' => $user,
             'token' => $token,
-            'token_type' => 'Bearer'
+            'token_type' => 'Bearer',
         ];
     }
 
     /**
      * Authenticate user and generate token
      */
-    public function signIn(SignInDTO $dto): array
+    public function signIn(array $credentials): array
     {
-        $credentials = $dto->toArray();
-
         if (!$token = Auth::guard('api')->attempt($credentials)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.']
