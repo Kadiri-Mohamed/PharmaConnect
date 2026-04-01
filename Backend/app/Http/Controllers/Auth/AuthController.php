@@ -74,4 +74,47 @@ class AuthController extends Controller
         ], 200);
     }
 
+    /**
+     * Refresh JWT token
+     */
+    public function refresh(Request $request, AuthService $authService)
+    {
+        try {
+            $result = $authService->refreshToken();
+
+            return response()->json([
+                'message' => 'Token refreshed successfully',
+                'token' => $result['token'],
+                'token_type' => $result['token_type'],
+            ], 200);
+
+        } catch (\Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
+            return response()->json([
+                'message' => 'Token is invalid'
+            ], 401);
+        } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
+            return response()->json([
+                'message' => 'Token refresh failed'
+            ], 401);
+        }
+    }
+
+    /**
+     * Get current authenticated user
+     */
+    public function me()
+    {
+        $user = Auth::guard('api')->user();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        return response()->json([
+            'user' => $user
+        ], 200);
+    }
+
 }
