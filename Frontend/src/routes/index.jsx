@@ -10,6 +10,7 @@ import DashboardPage from '../pages/dashboard/DashboardPage';
 import ProfilePage from '../pages/profile/ProfilePage';
 import ClientDashboard from '../pages/dashboard/ClientDashboard';
 import PharmacyDashboard from '../pages/dashboard/PharmacyDashboard';
+import PharmacyProfile from '../pages/pharmacy/PharmacyProfile';
 import RoleProtectedRoute from '../components/RoleProtectedRoute';
 
 const AppRoutes = () => {
@@ -36,6 +37,7 @@ const AppRoutes = () => {
                     <Route element={<ProtectedRoute />}>
                         <Route element={<RoleProtectedRoute allowedRoles={[ 'pharmacist' ]} />}>
                             <Route path="/dashboard/pharmacy" element={<PharmacyDashboard />} />
+                            <Route path="/dashboard/pharmacy-profile" element={<PharmacyProfile />} />
                         </Route>
                     </Route>
 

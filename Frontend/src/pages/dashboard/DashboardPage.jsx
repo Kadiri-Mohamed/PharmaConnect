@@ -60,6 +60,19 @@ const DashboardPage = () => {
                     No recent activity to display. Start by adding records.
                 </div>
             </div>
+
+            {user?.role === 'pharmacist' && (
+                <div className="bg-white shadow rounded-lg p-6">
+                    <h4 className="text-lg font-medium text-gray-900 mb-4">Pharmacy Owner</h4>
+                    <p className="text-sm text-gray-600">Manage your pharmacy profile.</p>
+                    <a
+                        href="/dashboard/pharmacy-profile"
+                        className="inline-block mt-3 text-indigo-600 hover:text-indigo-900"
+                    >
+                        Edit Pharmacy Profile
+                    </a>
+                </div>
+            )}
         </div>
     );
 };
