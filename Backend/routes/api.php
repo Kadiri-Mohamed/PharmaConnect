@@ -2,9 +2,23 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+// Public endpoints (no authentication required)
+Route::prefix('public')->group(function () {
+    // Pharmacy endpoints
+    Route::get('pharmacies', [PublicController::class, 'pharmacies']);
+    Route::get('pharmacies/on-duty', [PublicController::class, 'pharmaciesOnDuty']);
+    Route::get('pharmacies/{id}', [PublicController::class, 'pharmacy']);
+
+    // Medicine endpoints
+    Route::get('medicines', [PublicController::class, 'medicines']);
+    Route::get('medicines/search', [PublicController::class, 'searchMedicines']);
+    Route::get('medicines/{id}/availability', [PublicController::class, 'checkAvailability']);
+    Route::get('pharmacies/{pharmacyId}/medicines', [PublicController::class, 'medicinesByPharmacy']);
+});
 
 Route::post('signUp', [AuthController::class, 'signUp']);
 Route::post('signIn', [AuthController::class, 'signIn']);
