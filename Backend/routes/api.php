@@ -16,8 +16,14 @@ Route::middleware('auth:api')->group(function () {
     Route::put('updatePassword', [ProfileController::class, 'updatePassword']);
     Route::delete('deleteProfile', [ProfileController::class, 'deleteProfile']);
 
-    Route::middleware('role:pharmacist')->get('dashboard/pharmacy', function () {
-        return response()->json(['message' => 'Welcome to the pharmacist dashboard']);
+    Route::middleware('role:pharmacist')->group(function () {
+        Route::get('dashboard/pharmacy', function () {
+            return response()->json(['message' => 'Welcome to the pharmacist dashboard']);
+        });
+
+        Route::get('pharmacy', [\App\Http\Controllers\PharmacyController::class, 'show']);
+        Route::post('pharmacy', [\App\Http\Controllers\PharmacyController::class, 'store']);
+        Route::put('pharmacy', [\App\Http\Controllers\PharmacyController::class, 'update']);
     });
 
     Route::middleware('role:client')->get('dashboard/client', function () {
