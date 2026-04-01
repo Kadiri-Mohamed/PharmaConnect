@@ -69,9 +69,52 @@ class User extends Authenticatable implements JWTSubject
         return [];
     }
 
+    /**
+     * Get the pharmacy owned by the user.
+     */
     public function pharmacy()
     {
         return $this->hasOne(Pharmacy::class);
+    }
+
+    /**
+     * Get the user's panier (shopping cart).
+     */
+    public function panier()
+    {
+        return $this->hasOne(Panier::class);
+    }
+
+    /**
+     * Get all paniers for the user.
+     */
+    public function paniers()
+    {
+        return $this->hasMany(Panier::class);
+    }
+
+    /**
+     * Get all commandes (orders) placed by the user.
+     */
+    public function commandes()
+    {
+        return $this->hasMany(Commande::class);
+    }
+
+    /**
+     * Get all ordonnances (prescriptions) uploaded by the user.
+     */
+    public function ordonnances()
+    {
+        return $this->hasMany(Ordonnance::class);
+    }
+
+    /**
+     * Get all rare medicine requests made by the user.
+     */
+    public function rareMedicineRequests()
+    {
+        return $this->hasMany(RareMedicineRequest::class);
     }
 }
 
