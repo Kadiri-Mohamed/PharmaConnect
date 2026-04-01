@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\RareMedicineRequestController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,9 @@ Route::prefix('public')->group(function () {
     Route::get('pharmacies/{pharmacyId}/medicines', [PublicController::class, 'medicinesByPharmacy']);
 });
 
+// Rare medicine requests (public creation, authenticated viewing)
+Route::post('rare-medicine-requests', [RareMedicineRequestController::class, 'store']);
+
 Route::post('signUp', [AuthController::class, 'signUp']);
 Route::post('signIn', [AuthController::class, 'signIn']);
 Route::middleware('auth:api')->group(function () {
@@ -30,6 +34,9 @@ Route::middleware('auth:api')->group(function () {
     Route::put('updatePassword', [ProfileController::class, 'updatePassword']);
     Route::delete('deleteProfile', [ProfileController::class, 'deleteProfile']);
 
+    // Rare medicine requests (authenticated users)
+    Route::get('rare-medicine-requests/my-requests', [RareMedicineRequestController::class, 'myRequests']);
+
     Route::middleware('role:pharmacist')->group(function () {
         Route::get('dashboard/pharmacy', function () {
             return response()->json(['message' => 'Welcome to the pharmacist dashboard']);
@@ -38,6 +45,12 @@ Route::middleware('auth:api')->group(function () {
         Route::get('pharmacy', [\App\Http\Controllers\PharmacyController::class, 'show']);
         Route::post('pharmacy', [\App\Http\Controllers\PharmacyController::class, 'store']);
         Route::put('pharmacy', [\App\Http\Controllers\PharmacyController::class, 'update']);
+
+        // Rare medicine requests (pharmacist only)
+        Route::get('rare-medicine-requests', [RareMedicineRequestController::class, 'index']);
+        Route::get('rare-medicine-requests/{id}', [RareMedicineRequestController::class, 'show']);
+        Route::put('rare-medicine-requests/{id}/status', [RareMedicineRequestController::class, 'updateStatus']);
+        Route::get('rare-medicine-requests/statistics', [RareMedicineRequestController::class, 'statistics']);
     });
 
     Route::middleware('role:client')->get('dashboard/client', function () {
