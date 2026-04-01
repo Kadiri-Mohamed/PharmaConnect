@@ -12,10 +12,23 @@ return new class extends Migration {
     {
         Schema::create('prescriptions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')
+                ->constrained('users')
+                ->cascadeOnDelete();
+
             $table->string('image');
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->enum('status', [
+                'pending',
+                'approved',
+                'rejected'
+            ])->default('pending')->index();
+
             $table->timestamps();
+
+            // Performance indexes
+            $table->index(['user_id', 'status']);
+            $table->index(['status', 'created_at']);
+            $table->index('created_at');
         });
     }
 

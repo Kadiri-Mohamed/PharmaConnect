@@ -12,10 +12,20 @@ return new class extends Migration {
     {
         Schema::create('order_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('order_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('medicine_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('order_id')
+                ->constrained('orders')
+                ->cascadeOnDelete();
+
+            $table->foreignId('medicine_id')
+                ->constrained('medicines')
+                ->restrictOnDelete();
+
             $table->integer('quantity');
-            $table->decimal('price', 8, 2);
+            $table->decimal('price', 10, 2);
+
+            // Performance indexes
+            $table->index('order_id');
+            $table->index('medicine_id');
         });
     }
 

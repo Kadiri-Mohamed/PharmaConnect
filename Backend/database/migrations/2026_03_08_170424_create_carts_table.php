@@ -12,11 +12,16 @@ return new class extends Migration {
     {
         Schema::create('carts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')
+                ->constrained('users')
+                ->cascadeOnDelete();
 
             $table->decimal('total_price', 10, 2)->default(0);
-
             $table->timestamps();
+
+            // Performance indexes
+            $table->unique('user_id');
+            $table->index('created_at');
         });
     }
 

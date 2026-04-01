@@ -13,20 +13,22 @@ return new class extends Migration {
         Schema::create('medicines', function (Blueprint $table) {
             $table->id();
             $table->foreignId('pharmacy_id')
-                ->constrained()
+                ->constrained('pharmacies')
                 ->cascadeOnDelete();
 
-            $table->string('name');
-
+            $table->string('name')->index();
             $table->text('description')->nullable();
-
-            $table->decimal('price', 8, 2);
-
+            $table->decimal('price', 10, 2);
             $table->integer('stock')->default(0);
-
             $table->boolean('requires_prescription')->default(false);
 
             $table->timestamps();
+
+            // Performance indexes
+            $table->index(['pharmacy_id', 'name']);
+            $table->index('requires_prescription');
+            $table->index('stock');
+            $table->index('created_at');
         });
     }
 
