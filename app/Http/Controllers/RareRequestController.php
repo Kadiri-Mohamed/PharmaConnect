@@ -1,0 +1,118 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\RareRequest;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
+
+class RareRequestController extends Controller
+{
+    /**
+     * Display a listing of rare requests.
+     *
+     * @return JsonResponse
+     */
+    public function index(): JsonResponse
+    {
+        try {
+            $requests = RareRequest::paginate(15);
+
+            return response()->json([
+                'message' => 'Rare requests retrieved successfully',
+                'data' => $requests->items(),
+                'pagination' => [
+                    'current_page' => $requests->currentPage(),
+                    'total' => $requests->total(),
+                    'per_page' => $requests->perPage(),
+                    'last_page' => $requests->lastPage(),
+                ],
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while retrieving rare requests',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Store a newly created rare request.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return JsonResponse
+     */
+    public function store(\Illuminate\Http\Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'medicine_name' => ['required', 'string', 'max:255'],
+                'description' => ['nullable', 'string'],
+            ]);
+
+            $rareRequest = RareRequest::create([
+                'medicine_name' => $request->input('medicine_name'),
+                'description' => $request->input('description'),
+                'status' => 'pending',
+            ]);
+
+            return response()->json([
+                'message' => 'Rare request created successfully',
+                'data' => [
+                    'id' => $rareRequest->id,
+                    'medicine_name' => $rareRequest->medicine_name,
+                    'description' => $rareRequest->description,
+                    'status' => $rareRequest->status,
+                    'created_at' => $rareRequest->created_at,
+                ],
+            ], Response::HTTP_CREATED);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while creating rare request',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Update the status of a rare request.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param RareRequest $rareRequest
+     * @return JsonResponse
+     */
+    public function updateStatus(\Illuminate\Http\Request $request, RareRequest $rareRequest): JsonResponse
+    {
+        try {
+            $request->validate([
+                'status' => ['required', 'string', 'in:pending,found,not_found'],
+            ]);
+
+            $rareRequest->update([
+                'status' => $request->input('status'),
+            ]);
+
+            return response()->json([
+                'message' => 'Rare request status updated successfully',
+                'data' => [
+                    'id' => $rareRequest->id,
+                    'medicine_name' => $rareRequest->medicine_name,
+                    'status' => $rareRequest->status,
+                    'updated_at' => $rareRequest->updated_at,
+                ],
+            ], Response::HTTP_OK);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while updating rare request status',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+}
