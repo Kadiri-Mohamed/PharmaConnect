@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreOrderRequest;
 use App\Models\Order;
-use App\Services\OrderService;
+use App\Services\OrderServiceImproved;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -14,9 +14,9 @@ class OrderController extends Controller
     /**
      * Constructor to inject service.
      *
-     * @param OrderService $orderService
+     * @param OrderServiceImproved $orderService
      */
-    public function __construct(private OrderService $orderService) {}
+    public function __construct(private OrderServiceImproved $orderService) {}
 
     /**
      * Display a listing of user's orders.
