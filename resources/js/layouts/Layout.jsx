@@ -32,6 +32,8 @@ export default function Layout({ children, title = 'PharmaConnect' }) {
               <ul className="flex flex-col gap-2 rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm sm:flex-row sm:items-center sm:border-none sm:bg-transparent sm:p-0 sm:shadow-none">
                 {[
                   { label: 'Home', href: '/' },
+                  { label: 'Dashboard', href: '/dashboard' },
+                  { label: 'Medicaments', href: '/medicaments' },
                   { label: 'Pharmacies', href: '/pharmacies' },
                   { label: 'Cart', href: '/cart' },
                   { label: 'Orders', href: '/orders' },
@@ -45,6 +47,16 @@ export default function Layout({ children, title = 'PharmaConnect' }) {
                     </Link>
                   </li>
                 ))}
+                <li>
+                  <Link
+                    href={route('logout')}
+                    method="post"
+                    as="button"
+                    className="block rounded-2xl px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 sm:px-3"
+                  >
+                    Log out
+                  </Link>
+                </li>
               </ul>
             </nav>
           </div>

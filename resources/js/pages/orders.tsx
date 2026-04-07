@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
+import Layout from '@/layouts/Layout.jsx';
 
 const statusStyles = {
   pending: 'bg-slate-100 text-slate-700',
@@ -43,7 +44,7 @@ export default function OrdersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F7ED] px-4 py-8 sm:px-6 lg:px-10">
+    <Layout>
       <Head title="Orders | PharmaConnect" />
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="rounded-[2rem] bg-white/95 px-6 py-8 shadow-lg shadow-slate-200/50 sm:px-8">
@@ -125,6 +126,6 @@ export default function OrdersPage() {
           </div>
         </section>
       </div>
-    </div>
+    </Layout>
   );
 }

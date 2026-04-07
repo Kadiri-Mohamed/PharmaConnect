@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
+import Layout from '@/layouts/Layout.jsx';
 
 export default function CartPage() {
   const [cart, setCart] = useState({ items: [], total_price: 0, pharmacy_id: null });
@@ -154,7 +155,7 @@ export default function CartPage() {
   }, [cart.items]);
 
   return (
-    <div className="min-h-screen bg-[#F4F7ED] px-4 py-8 sm:px-6 lg:px-10">
+    <Layout>
       <Head title="Cart | PharmaConnect" />
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="rounded-[2rem] bg-white/90 px-6 py-6 shadow-lg shadow-slate-200/50 sm:px-8 sm:py-8">
@@ -313,6 +314,6 @@ export default function CartPage() {
           </div>
         )}
       </div>
-    </div>
+    </Layout>
   );
 }

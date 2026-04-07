@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Head } from '@inertiajs/react';
+import Layout from '@/layouts/Layout.jsx';
 
 export default function MedicamentsPage() {
   const [medicaments, setMedicaments] = useState([]);
@@ -85,7 +86,7 @@ export default function MedicamentsPage() {
   }, [medicaments, search, pharmacyFilter]);
 
   return (
-    <div className="min-h-screen bg-[#F4F7ED] px-4 py-8 sm:px-6 lg:px-10">
+    <Layout>
       <Head title="Medicaments | PharmaConnect" />
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="rounded-[2rem] bg-white/95 px-6 py-8 shadow-lg shadow-slate-200/50 sm:px-8">
@@ -214,6 +215,6 @@ export default function MedicamentsPage() {
           )}
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }

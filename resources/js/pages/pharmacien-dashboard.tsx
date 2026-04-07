@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
+import Layout from '@/layouts/Layout.jsx';
 
 export default function PharmacienDashboard() {
   const [dashboard, setDashboard] = useState({
@@ -78,7 +79,7 @@ export default function PharmacienDashboard() {
   const lowStockMedicaments = dashboard.medicaments.filter(item => Number(item.stock ?? 0) <= 20);
 
   return (
-    <div className="min-h-screen bg-[#F4F7ED] px-4 py-8 sm:px-6 lg:px-10">
+    <Layout>
       <Head title="Dashboard | PharmaConnect" />
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="rounded-[2rem] bg-white/95 px-6 py-8 shadow-lg shadow-slate-200/50 sm:px-8">
@@ -234,6 +235,6 @@ export default function PharmacienDashboard() {
           </section>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }
