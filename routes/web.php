@@ -14,7 +14,7 @@ Route::middleware(['auth'])->group(function () {
             return redirect()->route('pharmacien.dashboard');
         }
 
-        return Inertia::render('dashboard');
+        return Inertia::render('Client/Dashboard');
     })->name('dashboard');
 
     Route::middleware(['role:pharmacien'])->group(function () {
@@ -24,6 +24,22 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/pharmacien/dashboard', function () {
             return Inertia::render('pharmacien-dashboard');
         })->name('pharmacien.dashboard');
+
+        Route::get('/pharmacien/my-pharmacy', function () {
+            return Inertia::render('pharmacien/my-pharmacy');
+        })->name('pharmacien.my-pharmacy');
+
+        Route::get('/pharmacien/medicaments', function () {
+            return Inertia::render('pharmacien/manage-medicaments');
+        })->name('pharmacien.medicaments');
+
+        Route::get('/pharmacien/orders', function () {
+            return Inertia::render('pharmacien/manage-orders');
+        })->name('pharmacien.orders');
+
+        Route::get('/pharmacien/rare-requests', function () {
+            return Inertia::render('pharmacien/manage-rare-requests');
+        })->name('pharmacien.rare-requests');
     });
 
     Route::middleware(['role:client'])->group(function () {
@@ -42,6 +58,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/pharmacies', function () {
             return Inertia::render('pharmacies');
         })->name('pharmacies');
+
+        Route::get('/rare-requests', function () {
+            return Inertia::render('rare-requests');
+        })->name('rare-requests');
     });
 });
 
