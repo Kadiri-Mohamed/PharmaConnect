@@ -14,6 +14,7 @@ interface RegisterForm {
     email: string;
     password: string;
     password_confirmation: string;
+    role: 'client' | 'pharmacien';
 }
 
 export default function Register() {
@@ -22,6 +23,7 @@ export default function Register() {
         email: '',
         password: '',
         password_confirmation: '',
+        role: 'client',
     });
 
     const submit: FormEventHandler = (e) => {
@@ -99,6 +101,35 @@ export default function Register() {
                             placeholder="Confirm password"
                         />
                         <InputError message={errors.password_confirmation} />
+                    </div>
+
+                    <div className="grid gap-3">
+                        <Label>Select your role</Label>
+                        <div className="flex items-center gap-6">
+                            <label className="flex items-center gap-2 text-sm">
+                                <input
+                                    type="radio"
+                                    name="role"
+                                    value="client"
+                                    checked={data.role === 'client'}
+                                    onChange={(e) => setData('role', e.target.value as RegisterForm['role'])}
+                                    disabled={processing}
+                                />
+                                Client
+                            </label>
+                            <label className="flex items-center gap-2 text-sm">
+                                <input
+                                    type="radio"
+                                    name="role"
+                                    value="pharmacien"
+                                    checked={data.role === 'pharmacien'}
+                                    onChange={(e) => setData('role', e.target.value as RegisterForm['role'])}
+                                    disabled={processing}
+                                />
+                                Pharmacien
+                            </label>
+                        </div>
+                        <InputError message={errors.role} />
                     </div>
 
                     <Button type="submit" className="mt-2 w-full" tabIndex={5} disabled={processing}>

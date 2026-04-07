@@ -34,18 +34,24 @@ class RegisteredUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'role' => 'required|in:client,pharmacien',
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => $request->role,
         ]);
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        return to_route('dashboard');
+        if ($user->role === 'pharmacien') {
+            return to_route('pharmacy.create');
+        }
+
+        return to_route('home');
     }
 }
