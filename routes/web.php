@@ -8,8 +8,24 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
+    Route::get('/cart', function () {
+        return Inertia::render('cart');
+    })->name('cart');
+
+    Route::get('/orders', function () {
+        return Inertia::render('orders');
+    })->name('orders');
+
+    Route::get('/medicaments', function () {
+        return Inertia::render('medicaments');
+    })->name('medicaments');
+
+    Route::get('/pharmacies', function () {
+        return Inertia::render('pharmacies');
+    })->name('pharmacies');
+
+    Route::get('/dashboard', function () {
+        return Inertia::render('pharmacien-dashboard');
     })->name('dashboard');
 });
 
