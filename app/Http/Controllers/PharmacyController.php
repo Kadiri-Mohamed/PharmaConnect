@@ -50,6 +50,65 @@ class PharmacyController extends Controller
     }
 
     /**
+     * Display the authenticated pharmacist pharmacy.
+     */
+    public function myPharmacy(): JsonResponse
+    {
+        $user = auth()->user();
+
+        if (! $user || $user->role !== 'pharmacien') {
+            return response()->json([
+                'message' => 'Unauthorized',
+            ], HttpResponse::HTTP_FORBIDDEN);
+        }
+
+        if (! $user->pharmacy) {
+            return response()->json([
+                'message' => 'No pharmacy found for this pharmacist.',
+            ], HttpResponse::HTTP_NOT_FOUND);
+        }
+
+        return response()->json([
+            'message' => 'Pharmacy retrieved successfully',
+            'data' => $user->pharmacy,
+        ], HttpResponse::HTTP_OK);
+    }
+
+    /**
+     * Update the authenticated pharmacist pharmacy.
+     */
+    public function updateMyPharmacy(Request $request): JsonResponse
+    {
+        $user = auth()->user();
+
+        if (! $user || $user->role !== 'pharmacien') {
+            return response()->json([
+                'message' => 'Unauthorized',
+            ], HttpResponse::HTTP_FORBIDDEN);
+        }
+
+        if (! $user->pharmacy) {
+            return response()->json([
+                'message' => 'No pharmacy found for this pharmacist.',
+            ], HttpResponse::HTTP_NOT_FOUND);
+        }
+
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'address' => 'sometimes|required|string|max:255',
+            'phone' => 'sometimes|required|string|max:20',
+            'status_garde' => 'sometimes|boolean',
+        ]);
+
+        $user->pharmacy->update($validated);
+
+        return response()->json([
+            'message' => 'Pharmacy updated successfully',
+            'data' => $user->pharmacy->fresh(),
+        ], HttpResponse::HTTP_OK);
+    }
+
+    /**
      * Display a listing of all pharmacies.
      *
      * @return JsonResponse
