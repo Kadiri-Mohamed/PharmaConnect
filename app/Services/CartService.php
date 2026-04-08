@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Medicament;
+use DomainException;
 use Illuminate\Database\Eloquent\Collection;
-use InvalidArgumentException;
 
 class CartService
 {
@@ -17,15 +17,21 @@ class CartService
      * @param int $medicamentId
      * @param int $quantity
      * @return CartItem
-     * @throws InvalidArgumentException
+     * @throws DomainException
      */
     public function addItem(Cart $cart, int $medicamentId, int $quantity): CartItem
     {
         if ($quantity <= 0) {
-            throw new InvalidArgumentException('Quantity must be greater than 0');
+            throw new DomainException('Quantity must be greater than 0');
         }
 
         $medicament = Medicament::findOrFail($medicamentId);
+        $existingFirstItem = $cart->items()->with('medicament')->first();
+
+        // Force one-pharmacy-per-cart to avoid order creation failures at checkout.
+        if ($existingFirstItem && $existingFirstItem->medicament->pharmacy_id !== $medicament->pharmacy_id) {
+            throw new DomainException('Your cart already contains items from another pharmacy.');
+        }
 
         $existingItem = $cart->items()->where('medicament_id', $medicamentId)->first();
 
@@ -57,12 +63,12 @@ class CartService
      * @param CartItem $cartItem
      * @param int $quantity
      * @return CartItem
-     * @throws InvalidArgumentException
+     * @throws DomainException
      */
     public function updateQuantity(CartItem $cartItem, int $quantity): CartItem
     {
         if ($quantity <= 0) {
-            throw new InvalidArgumentException('Quantity must be greater than 0');
+            throw new DomainException('Quantity must be greater than 0');
         }
 
         $cartItem->update(['quantity' => $quantity]);

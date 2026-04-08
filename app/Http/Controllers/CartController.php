@@ -40,6 +40,7 @@ class CartController extends Controller
                     'items' => $items->map(fn ($item) => [
                         'id' => $item->id,
                         'medicament_id' => $item->medicament_id,
+                        'pharmacy_id' => $item->medicament->pharmacy_id,
                         'medicament_name' => $item->medicament->name,
                         'price' => $item->medicament->price,
                         'quantity' => $item->quantity,

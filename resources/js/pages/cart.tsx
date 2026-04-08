@@ -126,23 +126,33 @@ export default function CartPage() {
     setError('');
 
     try {
+      const resolvedPharmacyId =
+        cart.pharmacy_id ??
+        (cart.items.length > 0 ? Number(cart.items[0].pharmacy_id ?? 0) || null : null);
+
+      if (!resolvedPharmacyId) {
+        throw new Error('Unable to detect pharmacy for this cart. Please re-add items.');
+      }
+
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
         },
-        body: JSON.stringify({ pharmacy_id: cart.pharmacy_id }),
+        body: JSON.stringify({ pharmacy_id: resolvedPharmacyId }),
         credentials: 'same-origin',
       });
 
       if (!response.ok) {
-        throw new Error('Unable to create order.');
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data?.message || 'Unable to create order.');
       }
 
       window.location.href = '/orders';
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unexpected error creating order.');
+    } finally {
       setActionLoading(false);
     }
   };
