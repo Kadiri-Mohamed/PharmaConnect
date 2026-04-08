@@ -22,10 +22,9 @@ class StoreMedicamentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'pharmacy_id' => ['required', 'exists:pharmacies,id'],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'price' => ['required', 'numeric', 'min:0'],
+            'price' => ['required', 'numeric', 'min:0.01'],
             'stock' => ['required', 'integer', 'min:0'],
             'requires_prescription' => ['boolean'],
         ];

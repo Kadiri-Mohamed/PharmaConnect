@@ -20,6 +20,12 @@ class RoleMiddleware
         // Force pharmacist onboarding before allowing other pharmacist routes.
         if ($role === 'pharmacien' && ! $request->routeIs('pharmacy.create', 'pharmacy.store')) {
             if (! $request->user()->pharmacy) {
+                if ($request->expectsJson() || $request->is('api/*')) {
+                    return response()->json([
+                        'message' => 'Please create your pharmacy profile first.',
+                    ], 403);
+                }
+
                 return redirect()->route('pharmacy.create');
             }
         }

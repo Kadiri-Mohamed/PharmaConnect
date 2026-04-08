@@ -34,7 +34,7 @@ Route::post('/rare-requests', [RareRequestController::class, 'store'])->name('ap
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
@@ -92,6 +92,7 @@ Route::middleware('auth:sanctum')->group(function () {
         |--------------------------------------------------------------------------
         */
         Route::prefix('medicaments')->group(function () {
+            Route::get('/', [MedicamentController::class, 'pharmacienIndex'])->name('api.pharmacien.medicaments.index');
             Route::post('/', [MedicamentController::class, 'store'])->name('api.pharmacien.medicaments.store');
             Route::put('/{medicament}', [MedicamentController::class, 'update'])->name('api.pharmacien.medicaments.update');
             Route::delete('/{medicament}', [MedicamentController::class, 'destroy'])->name('api.pharmacien.medicaments.destroy');
@@ -119,5 +120,3 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
 });
-
-

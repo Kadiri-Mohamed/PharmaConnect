@@ -22,10 +22,10 @@ class UpdateMedicamentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['sometimes', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'price' => ['sometimes', 'numeric', 'min:0'],
-            'stock' => ['sometimes', 'integer', 'min:0'],
+            'price' => ['required', 'numeric', 'min:0.01'],
+            'stock' => ['required', 'integer', 'min:0'],
             'requires_prescription' => ['boolean'],
         ];
     }

@@ -1,3 +1,4 @@
+// resources/js/app.tsx
 import '../css/app.css';
 
 import { createInertiaApp } from '@inertiajs/react';
@@ -15,29 +16,24 @@ createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: async (name) => {
         const pages = {
+            ...import.meta.glob('./Pages/**/*.jsx'),
             ...import.meta.glob('./pages/**/*.tsx'),
             ...import.meta.glob('./pages/**/*.jsx'),
         };
 
+        const jsxUpperPath = `./Pages/${name}.jsx`; // required
         const tsxPath = `./pages/${name}.tsx`;
-        const jsxPath = `./pages/${name}.jsx`;
-        const loader = pages[tsxPath] ?? pages[jsxPath];
+        const jsxLowerPath = `./pages/${name}.jsx`;
 
-        if (!loader) {
-            throw new Error(`Page not found: ${name}`);
-        }
+        const loader = pages[jsxUpperPath] ?? pages[tsxPath] ?? pages[jsxLowerPath];
 
+        if (!loader) throw new Error(`Page not found: ${name}`);
         return (await loader()) as never;
     },
     setup({ el, App, props }) {
-        const root = createRoot(el);
-
-        root.render(<App {...props} />);
+        createRoot(el).render(<App {...props} />);
     },
-    progress: {
-        color: '#4B5563',
-    },
+    progress: { color: '#4B5563' },
 });
 
-// This will set light / dark mode on load...
 initializeTheme();
