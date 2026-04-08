@@ -18,6 +18,10 @@ export default function ClientDashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
+    const isNotFound = (err) => {
+        return err?.response?.status === 404;
+    };
+
     useEffect(() => {
         if (!user) return;
 
@@ -31,19 +35,31 @@ export default function ClientDashboard() {
             setError('');
 
             try {
-                const [ordersRes, cartRes] = await Promise.all([
-                    axios.get('/api/orders', { headers: { Accept: 'application/json' } }),
-                    axios.get('/api/cart', { headers: { Accept: 'application/json' } }),
-                ]);
+                const ordersPromise = axios.get('/api/orders', { headers: { Accept: 'application/json' } });
+                const cartPromise = axios.get('/api/cart', { headers: { Accept: 'application/json' } });
+                const [ordersResult, cartResult] = await Promise.allSettled([ordersPromise, cartPromise]);
 
-                const recentOrders = (ordersRes.data?.data ?? []).slice(0, 5);
-                setOrders(recentOrders);
+                if (ordersResult.status === 'fulfilled') {
+                    const recentOrders = (ordersResult.value.data?.data ?? []).slice(0, 5);
+                    setOrders(recentOrders);
+                } else {
+                    setOrders([]);
+                }
 
-                const cartData = cartRes.data?.data;
-                setCartSummary({
-                    itemCount: Number(cartData?.item_count ?? 0),
-                    totalPrice: Number(cartData?.total ?? 0),
-                });
+                if (cartResult.status === 'fulfilled') {
+                    const cartData = cartResult.value.data?.data;
+                    setCartSummary({
+                        itemCount: Number(cartData?.item_count ?? 0),
+                        totalPrice: Number(cartData?.total ?? 0),
+                    });
+                } else if (isNotFound(cartResult.reason)) {
+                    setCartSummary({
+                        itemCount: 0,
+                        totalPrice: 0,
+                    });
+                } else {
+                    throw cartResult.reason;
+                }
             } catch (err) {
                 setError('Unable to load dashboard data.');
             } finally {

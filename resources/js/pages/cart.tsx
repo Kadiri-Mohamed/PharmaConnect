@@ -29,10 +29,11 @@ export default function CartPage() {
       }
 
       const data = await response.json();
+      const cartData = data.data || {};
       setCart({
-        items: data.items || [],
-        total_price: Number(data.total_price || 0),
-        pharmacy_id: data.pharmacy_id ?? null,
+        items: cartData.items || [],
+        total_price: Number(cartData.total || 0),
+        pharmacy_id: cartData.pharmacy_id ?? null,
       });
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unexpected error loading cart.');

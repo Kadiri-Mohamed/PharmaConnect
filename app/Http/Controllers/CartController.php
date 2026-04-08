@@ -28,20 +28,16 @@ class CartController extends Controller
     {
         try {
             $user = auth()->user();
-            $cart = $user->cart;
-
-            if (!$cart) {
-                return response()->json([
-                    'message' => 'Cart not found',
-                    'data' => null,
-                ], Response::HTTP_NOT_FOUND);
-            }
+            $cart = $user->cart()->firstOrCreate([]);
+            $items = $cart->items()->with('medicament')->get();
+            $pharmacyId = $items->first()?->medicament?->pharmacy_id;
 
             return response()->json([
                 'message' => 'Cart retrieved successfully',
                 'data' => [
                     'id' => $cart->id,
-                    'items' => $cart->items()->with('medicament')->get()->map(fn ($item) => [
+                    'pharmacy_id' => $pharmacyId,
+                    'items' => $items->map(fn ($item) => [
                         'id' => $item->id,
                         'medicament_id' => $item->medicament_id,
                         'medicament_name' => $item->medicament->name,
@@ -74,13 +70,7 @@ class CartController extends Controller
     {
         try {
             $user = auth()->user();
-            $cart = $user->cart;
-
-            if (!$cart) {
-                return response()->json([
-                    'message' => 'Cart not found',
-                ], Response::HTTP_NOT_FOUND);
-            }
+            $cart = $user->cart()->firstOrCreate([]);
 
             $cartItem = $this->cartService->addItem(
                 $cart,
@@ -189,13 +179,7 @@ class CartController extends Controller
     {
         try {
             $user = auth()->user();
-            $cart = $user->cart;
-
-            if (!$cart) {
-                return response()->json([
-                    'message' => 'Cart not found',
-                ], Response::HTTP_NOT_FOUND);
-            }
+            $cart = $user->cart()->firstOrCreate([]);
 
             $this->cartService->clearCart($cart);
 

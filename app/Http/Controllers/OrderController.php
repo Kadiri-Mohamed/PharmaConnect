@@ -179,4 +179,52 @@ class OrderController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    /**
+     * Display pharmacist orders for the authenticated pharmacist pharmacy.
+     */
+    public function pharmacienOrders(): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+            if (! $user || $user->role !== 'pharmacien') {
+                return response()->json([
+                    'message' => 'Unauthorized',
+                ], Response::HTTP_FORBIDDEN);
+            }
+
+            if (! $user->pharmacy) {
+                return response()->json([
+                    'message' => 'No pharmacy found for this pharmacist.',
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            $orders = Order::query()
+                ->with([
+                    'user:id,name,email',
+                    'items:id,order_id,medicament_id,quantity,price',
+                    'items.medicament:id,name',
+                ])
+                ->where('pharmacy_id', $user->pharmacy->id)
+                ->latest()
+                ->get();
+
+            return response()->json([
+                'message' => 'Orders retrieved successfully',
+                'data' => $orders,
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while retrieving orders',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Backward-compatible alias for pharmacist order status updates.
+     */
+    public function updateOrderStatus(\Illuminate\Http\Request $request, Order $order): JsonResponse
+    {
+        return $this->updateStatus($request, $order);
+    }
 }

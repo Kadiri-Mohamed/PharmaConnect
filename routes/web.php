@@ -36,6 +36,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/orders', fn () => Inertia::render('orders'))->name('orders');
         Route::get('/medicaments', fn () => Inertia::render('medicaments'))->name('medicaments');
         Route::get('/pharmacies', fn () => Inertia::render('pharmacies'))->name('pharmacies');
+        Route::get('/pharmacies/{pharmacy}', function (string $pharmacy) {
+            return Inertia::render('pharmacy-details', [
+                'pharmacyId' => (int) $pharmacy,
+            ]);
+        })->name('pharmacy.details');
         Route::get('/rare-requests', fn () => Inertia::render('rare-requests'))->name('rare-requests');
     });
 });
