@@ -33,9 +33,11 @@ class CartController extends Controller
             $pharmacyId = $items->first()?->medicament?->pharmacy_id;
             $hasValidPrescription = $user->prescriptions()
                 ->where('status', 'validated')
+                ->doesntHave('orders')
                 ->exists();
             $hasUploadedPrescription = $user->prescriptions()
                 ->whereIn('status', ['pending', 'validated'])
+                ->doesntHave('orders')
                 ->exists();
             $hasPrescriptionRequiredItems = $items->contains(
                 fn ($item) => (bool) $item->medicament->requires_prescription

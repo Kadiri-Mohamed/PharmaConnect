@@ -58,6 +58,7 @@ class OrderServiceImproved
             if ($requiresPrescription) {
                 $prescriptionId = $user->prescriptions()
                     ->whereIn('status', ['pending', 'validated'])
+                    ->doesntHave('orders')
                     ->latest()
                     ->value('id');
             }

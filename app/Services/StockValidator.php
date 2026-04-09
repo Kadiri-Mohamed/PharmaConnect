@@ -69,6 +69,7 @@ class StockValidator
 
         $submittedPrescriptions = $user->prescriptions()
             ->whereIn('status', ['pending', 'validated'])
+            ->doesntHave('orders')
             ->exists();
 
         if (! $submittedPrescriptions) {
