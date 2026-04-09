@@ -3,7 +3,13 @@ import { Head, Link } from '@inertiajs/react';
 import Layout from '@/layouts/Layout.jsx';
 
 export default function CartPage() {
-  const [cart, setCart] = useState({ items: [], total_price: 0, pharmacy_id: null });
+  const [cart, setCart] = useState({
+    items: [],
+    total_price: 0,
+    pharmacy_id: null,
+    has_valid_prescription: false,
+    has_prescription_required_items: false,
+  });
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
@@ -34,6 +40,8 @@ export default function CartPage() {
         items: cartData.items || [],
         total_price: Number(cartData.total || 0),
         pharmacy_id: cartData.pharmacy_id ?? null,
+        has_valid_prescription: Boolean(cartData.has_valid_prescription),
+        has_prescription_required_items: Boolean(cartData.has_prescription_required_items),
       });
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unexpected error loading cart.');
@@ -113,7 +121,13 @@ export default function CartPage() {
         throw new Error('Unable to clear cart.');
       }
 
-      setCart({ items: [], total_price: 0, pharmacy_id: null });
+      setCart({
+        items: [],
+        total_price: 0,
+        pharmacy_id: null,
+        has_valid_prescription: false,
+        has_prescription_required_items: false,
+      });
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Unexpected error clearing cart.');
     } finally {
@@ -165,6 +179,9 @@ export default function CartPage() {
     }, 0);
   }, [cart.items]);
 
+  const requiresPrescriptionButMissingValidation =
+    cart.has_prescription_required_items && !cart.has_valid_prescription;
+
   return (
     <Layout>
       <Head title="Cart | PharmaConnect" />
@@ -195,6 +212,20 @@ export default function CartPage() {
             </div>
           </div>
         </div>
+
+        {requiresPrescriptionButMissingValidation && (
+          <div className="rounded-2xl border border-amber-300 bg-amber-50 px-6 py-4 text-sm text-amber-800">
+            Some items in your cart require a validated prescription. Please upload and validate your prescription before creating this order.
+            <div className="mt-3">
+              <Link
+                href="/prescriptions"
+                className="inline-flex rounded-lg bg-[#2E6E65] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#285f57]"
+              >
+                Upload Prescription
+              </Link>
+            </div>
+          </div>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-[1.7fr_0.8fr]">
           <section className="overflow-hidden rounded-[2rem] bg-white/90 shadow-lg shadow-slate-200/40">
@@ -233,7 +264,7 @@ export default function CartPage() {
                     </thead>
                     <tbody>
                       {cart.items.map((item) => {
-                        const name = item.medicament?.name || item.name || 'Unknown medicament';
+                        const name = item.medicament_name || item.medicament?.name || item.name || 'Unknown medicament';
                         const price = Number(item.price ?? item.medicament?.price ?? 0);
                         const quantity = Number(item.quantity ?? 0);
                         const subtotal = price * quantity;
@@ -304,7 +335,7 @@ export default function CartPage() {
               <button
                 type="button"
                 onClick={createOrder}
-                disabled={cart.items.length === 0 || actionLoading}
+                disabled={cart.items.length === 0 || actionLoading || requiresPrescriptionButMissingValidation}
                 className="w-full rounded-3xl bg-[#4CAF50] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#43a047] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {actionLoading ? 'Creating order...' : 'Create Order'}

@@ -98,7 +98,7 @@ export default function OrdersPage() {
                         <tr key={order.id} className="border-t border-slate-200 hover:bg-slate-50">
                           <td className="px-4 py-4 sm:px-6">
                             <Link href={`/orders/${order.id}`} className="font-medium text-slate-900 transition hover:text-[#2E6E65]">
-                              {order.pharmacy?.name || 'Unknown pharmacy'}
+                              {order.pharmacy_name || order.pharmacy?.name || 'Unknown pharmacy'}
                             </Link>
                           </td>
                           <td className="px-4 py-4 sm:px-6">

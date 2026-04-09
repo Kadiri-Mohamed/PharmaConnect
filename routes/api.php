@@ -6,6 +6,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\MedicamentController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PharmacyController;
+use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\RareRequestController;
 
 
@@ -59,6 +60,16 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [OrderController::class, 'store'])->name('api.orders.store');
         Route::get('/{order}', [OrderController::class, 'show'])->name('api.orders.show');
         Route::patch('/{order}/status', [OrderController::class, 'updateStatus'])->name('api.orders.update-status');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Prescription Routes (Client)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('prescriptions')->group(function () {
+        Route::get('/', [PrescriptionController::class, 'index'])->name('api.prescriptions.index');
+        Route::post('/', [PrescriptionController::class, 'store'])->name('api.prescriptions.store');
     });
 
     /*

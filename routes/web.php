@@ -34,6 +34,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:client'])->group(function () {
         Route::get('/cart', fn () => Inertia::render('cart'))->name('cart');
         Route::get('/orders', fn () => Inertia::render('orders'))->name('orders');
+        Route::get('/prescriptions', fn () => Inertia::render('prescriptions'))->name('prescriptions');
         Route::get('/medicaments', fn () => Inertia::render('medicaments'))->name('medicaments');
         Route::get('/pharmacies', fn () => Inertia::render('pharmacies'))->name('pharmacies');
         Route::get('/pharmacies/{pharmacy}', function (string $pharmacy) {

@@ -31,12 +31,20 @@ class CartController extends Controller
             $cart = $user->cart()->firstOrCreate([]);
             $items = $cart->items()->with('medicament')->get();
             $pharmacyId = $items->first()?->medicament?->pharmacy_id;
+            $hasValidPrescription = $user->prescriptions()
+                ->where('status', 'validated')
+                ->exists();
+            $hasPrescriptionRequiredItems = $items->contains(
+                fn ($item) => (bool) $item->medicament->requires_prescription
+            );
 
             return response()->json([
                 'message' => 'Cart retrieved successfully',
                 'data' => [
                     'id' => $cart->id,
                     'pharmacy_id' => $pharmacyId,
+                    'has_valid_prescription' => $hasValidPrescription,
+                    'has_prescription_required_items' => $hasPrescriptionRequiredItems,
                     'items' => $items->map(fn ($item) => [
                         'id' => $item->id,
                         'medicament_id' => $item->medicament_id,
@@ -45,6 +53,7 @@ class CartController extends Controller
                         'price' => $item->medicament->price,
                         'quantity' => $item->quantity,
                         'subtotal' => $item->medicament->price * $item->quantity,
+                        'requires_prescription' => (bool) $item->medicament->requires_prescription,
                     ]),
                     'total' => $this->cartService->calculateTotal($cart),
                     'item_count' => $this->cartService->getItemCount($cart),
