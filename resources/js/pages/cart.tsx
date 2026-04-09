@@ -8,10 +8,14 @@ export default function CartPage() {
     total_price: 0,
     pharmacy_id: null,
     has_valid_prescription: false,
+    has_uploaded_prescription: false,
     has_prescription_required_items: false,
   });
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [selectedPrescriptionFile, setSelectedPrescriptionFile] = useState<File | null>(null);
+  const [uploadMessage, setUploadMessage] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -41,6 +45,7 @@ export default function CartPage() {
         total_price: Number(cartData.total || 0),
         pharmacy_id: cartData.pharmacy_id ?? null,
         has_valid_prescription: Boolean(cartData.has_valid_prescription),
+        has_uploaded_prescription: Boolean(cartData.has_uploaded_prescription),
         has_prescription_required_items: Boolean(cartData.has_prescription_required_items),
       });
     } catch (error) {
@@ -126,6 +131,7 @@ export default function CartPage() {
         total_price: 0,
         pharmacy_id: null,
         has_valid_prescription: false,
+        has_uploaded_prescription: false,
         has_prescription_required_items: false,
       });
     } catch (error) {
@@ -171,6 +177,48 @@ export default function CartPage() {
     }
   };
 
+  const uploadPrescription = async () => {
+    if (!selectedPrescriptionFile) {
+      setError('Please choose a prescription file first.');
+      return;
+    }
+
+    setUploadLoading(true);
+    setError('');
+    setUploadMessage('');
+
+    try {
+      const formData = new FormData();
+      formData.append('image', selectedPrescriptionFile);
+
+      const response = await fetch('/api/prescriptions', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+        },
+        body: formData,
+        credentials: 'same-origin',
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const firstValidationError = data?.errors
+          ? Object.values(data.errors)?.[0]?.[0]
+          : null;
+        throw new Error(firstValidationError || data?.message || 'Unable to upload prescription.');
+      }
+
+      setUploadMessage(data?.message || 'Prescription uploaded successfully.');
+      setSelectedPrescriptionFile(null);
+      await fetchCart();
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : 'Unexpected error uploading prescription.');
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
   const totalPrice = useMemo(() => {
     return cart.items.reduce((sum, item) => {
       const price = Number(item.price ?? item.medicament?.price ?? 0);
@@ -179,8 +227,8 @@ export default function CartPage() {
     }, 0);
   }, [cart.items]);
 
-  const requiresPrescriptionButMissingValidation =
-    cart.has_prescription_required_items && !cart.has_valid_prescription;
+  const requiresPrescriptionButMissingUpload =
+    cart.has_prescription_required_items && !cart.has_uploaded_prescription;
 
   return (
     <Layout>
@@ -213,17 +261,38 @@ export default function CartPage() {
           </div>
         </div>
 
-        {requiresPrescriptionButMissingValidation && (
+        {cart.has_prescription_required_items && (
           <div className="rounded-2xl border border-amber-300 bg-amber-50 px-6 py-4 text-sm text-amber-800">
-            Some items in your cart require a validated prescription. Please upload and validate your prescription before creating this order.
-            <div className="mt-3">
-              <Link
-                href="/prescriptions"
-                className="inline-flex rounded-lg bg-[#2E6E65] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#285f57]"
+            <p>
+              Some items in your cart require a prescription. Upload it here before creating this order.
+            </p>
+            {cart.has_uploaded_prescription && (
+              <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+                Prescription already uploaded. You can place the order now, or upload a new file to replace it.
+              </div>
+            )}
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.pdf"
+                onChange={(e) => setSelectedPrescriptionFile(e.target.files?.[0] || null)}
+                className="block w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs text-slate-700 file:mr-3 file:rounded-md file:border-0 file:bg-[#2E6E65] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white"
+              />
+              <button
+                type="button"
+                onClick={uploadPrescription}
+                disabled={uploadLoading || !selectedPrescriptionFile}
+                className="inline-flex items-center justify-center rounded-lg bg-[#2E6E65] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#285f57] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Upload Prescription
-              </Link>
+                {uploadLoading ? 'Uploading...' : 'Upload Prescription'}
+              </button>
             </div>
+            <p className="mt-3 text-xs text-amber-700">After upload, you can create the order and the pharmacy will review it.</p>
+            {uploadMessage && (
+              <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+                {uploadMessage}
+              </div>
+            )}
           </div>
         )}
 
@@ -335,7 +404,7 @@ export default function CartPage() {
               <button
                 type="button"
                 onClick={createOrder}
-                disabled={cart.items.length === 0 || actionLoading || requiresPrescriptionButMissingValidation}
+                disabled={cart.items.length === 0 || actionLoading || requiresPrescriptionButMissingUpload}
                 className="w-full rounded-3xl bg-[#4CAF50] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#43a047] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {actionLoading ? 'Creating order...' : 'Create Order'}

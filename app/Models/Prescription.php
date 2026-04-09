@@ -27,4 +27,12 @@ class Prescription extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Get the orders linked to this prescription.
+     */
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }

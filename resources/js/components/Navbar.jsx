@@ -9,7 +9,6 @@ const ROLE_LINKS = {
         { label: 'Medicaments', href: '/medicaments' },
         { label: 'Cart', href: '/cart' },
         { label: 'Orders', href: '/orders' },
-        { label: 'Prescriptions', href: '/prescriptions' },
         { label: 'Rare Requests', href: '/rare-requests' },
     ],
     pharmacien: [

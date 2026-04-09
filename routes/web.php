@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\PharmacyController;
+use App\Http\Controllers\PrescriptionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -9,6 +10,9 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('/prescriptions/{prescription}/file', [PrescriptionController::class, 'file'])
+        ->name('prescriptions.file');
+
     Route::get('/dashboard', function () {
         if (auth()->user()?->role === 'pharmacien') {
             return redirect()->route('pharmacien.dashboard');

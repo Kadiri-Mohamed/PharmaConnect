@@ -35,6 +35,8 @@ class OrderController extends Controller
                     'id' => $order->id,
                     'pharmacy_id' => $order->pharmacy_id,
                     'pharmacy_name' => $order->pharmacy->name,
+                    'prescription_id' => $order->prescription_id,
+                    'prescription_status' => $order->prescription?->status,
                     'status' => $order->status,
                     'total_price' => $order->total_price,
                     'item_count' => $order->items()->count(),
@@ -69,6 +71,7 @@ class OrderController extends Controller
                     'id' => $order->id,
                     'user_id' => $order->user_id,
                     'pharmacy_id' => $order->pharmacy_id,
+                    'prescription_id' => $order->prescription_id,
                     'status' => $order->status,
                     'total_price' => $order->total_price,
                     'created_at' => $order->created_at,
@@ -80,7 +83,9 @@ class OrderController extends Controller
             ], Response::HTTP_BAD_REQUEST);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An error occurred while creating order',
+                'message' => config('app.debug')
+                    ? $e->getMessage()
+                    : 'An error occurred while creating order',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -101,7 +106,7 @@ class OrderController extends Controller
                 ], Response::HTTP_FORBIDDEN);
             }
 
-            $order->load(['pharmacy', 'items.medicament']);
+            $order->load(['pharmacy', 'prescription', 'items.medicament']);
 
             return response()->json([
                 'message' => 'Order retrieved successfully',
@@ -115,6 +120,11 @@ class OrderController extends Controller
                         'phone' => $order->pharmacy->phone,
                     ],
                     'status' => $order->status,
+                    'prescription' => $order->prescription ? [
+                        'id' => $order->prescription->id,
+                        'status' => $order->prescription->status,
+                        'file_url' => route('prescriptions.file', $order->prescription->id),
+                    ] : null,
                     'total_price' => $order->total_price,
                     'items' => $order->items->map(fn ($item) => [
                         'id' => $item->id,
@@ -145,8 +155,21 @@ class OrderController extends Controller
     public function updateStatus(\Illuminate\Http\Request $request, Order $order): JsonResponse
     {
         try {
-            // Verify order belongs to authenticated user or user is pharmacist
-            if ($order->user_id !== auth()->id() && auth()->user()->role !== 'pharmacien') {
+            $user = auth()->user();
+
+            if (! $user) {
+                return response()->json([
+                    'message' => 'Unauthorized',
+                ], Response::HTTP_FORBIDDEN);
+            }
+
+            if ($user->role === 'pharmacien') {
+                if (! $user->pharmacy || $order->pharmacy_id !== $user->pharmacy->id) {
+                    return response()->json([
+                        'message' => 'Unauthorized',
+                    ], Response::HTTP_FORBIDDEN);
+                }
+            } elseif ($order->user_id !== $user->id) {
                 return response()->json([
                     'message' => 'Unauthorized',
                 ], Response::HTTP_FORBIDDEN);
@@ -202,6 +225,7 @@ class OrderController extends Controller
             $orders = Order::query()
                 ->with([
                     'user:id,name,email',
+                    'prescription:id,image,status',
                     'items:id,order_id,medicament_id,quantity,price',
                     'items.medicament:id,name',
                 ])
@@ -211,7 +235,21 @@ class OrderController extends Controller
 
             return response()->json([
                 'message' => 'Orders retrieved successfully',
-                'data' => $orders,
+                'data' => $orders->map(fn (Order $order) => [
+                    'id' => $order->id,
+                    'user_id' => $order->user_id,
+                    'pharmacy_id' => $order->pharmacy_id,
+                    'status' => $order->status,
+                    'total_price' => $order->total_price,
+                    'created_at' => $order->created_at,
+                    'user' => $order->user,
+                    'items' => $order->items,
+                    'prescription' => $order->prescription ? [
+                        'id' => $order->prescription->id,
+                        'status' => $order->prescription->status,
+                        'file_url' => route('prescriptions.file', $order->prescription->id),
+                    ] : null,
+                ]),
             ], Response::HTTP_OK);
         } catch (\Exception $e) {
             return response()->json([

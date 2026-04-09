@@ -50,11 +50,23 @@ class OrderServiceImproved
 
             // Step 3: Calculate total (use database aggregation if possible)
             $totalPrice = $this->calculateOrderTotal($cartItems);
+            $requiresPrescription = $cartItems->contains(
+                fn ($item) => (bool) $item->medicament->requires_prescription
+            );
+            $prescriptionId = null;
+
+            if ($requiresPrescription) {
+                $prescriptionId = $user->prescriptions()
+                    ->whereIn('status', ['pending', 'validated'])
+                    ->latest()
+                    ->value('id');
+            }
 
             // Step 4: Create order
             $order = Order::create([
                 'user_id' => $user->id,
                 'pharmacy_id' => $pharmacyId,
+                'prescription_id' => $prescriptionId,
                 'status' => 'pending',
                 'total_price' => $totalPrice,
             ]);
@@ -119,6 +131,7 @@ class OrderServiceImproved
         return $user->orders()
             ->with([
                 'pharmacy:id,name,address,phone',
+                'prescription:id,status',
                 'items:id,order_id,medicament_id,quantity,price',
                 'items.medicament:id,name',
             ])

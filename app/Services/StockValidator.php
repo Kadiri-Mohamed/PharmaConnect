@@ -67,13 +67,13 @@ class StockValidator
             return;
         }
 
-        $validPrescriptions = $user->prescriptions()
-            ->where('status', 'validated')
+        $submittedPrescriptions = $user->prescriptions()
+            ->whereIn('status', ['pending', 'validated'])
             ->exists();
 
-        if (!$validPrescriptions) {
+        if (! $submittedPrescriptions) {
             throw new DomainException(
-                'Valid prescription required for selected items'
+                'Prescription upload required for selected items'
             );
         }
     }

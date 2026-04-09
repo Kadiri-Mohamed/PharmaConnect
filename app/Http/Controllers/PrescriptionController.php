@@ -6,6 +6,7 @@ use App\Models\Prescription;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 
 class PrescriptionController extends Controller
 {
@@ -62,7 +63,7 @@ class PrescriptionController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Prescription uploaded successfully. It will be reviewed soon.',
+            'message' => 'Prescription uploaded successfully. You can now place your order and the pharmacy will review it.',
             'data' => [
                 'id' => $prescription->id,
                 'image' => $prescription->image,
@@ -70,5 +71,34 @@ class PrescriptionController extends Controller
                 'created_at' => $prescription->created_at,
             ],
         ], Response::HTTP_CREATED);
+    }
+
+    /**
+     * Stream a prescription file for authorized users.
+     */
+    public function file(Prescription $prescription)
+    {
+        $user = auth()->user();
+        if (! $user) {
+            abort(Response::HTTP_FORBIDDEN);
+        }
+
+        $canAccess = false;
+
+        if ($user->role === 'client' && $prescription->user_id === $user->id) {
+            $canAccess = true;
+        }
+
+        if ($user->role === 'pharmacien' && $user->pharmacy) {
+            $canAccess = $user->pharmacy->orders()
+                ->where('prescription_id', $prescription->id)
+                ->exists();
+        }
+
+        if (! $canAccess) {
+            abort(Response::HTTP_FORBIDDEN);
+        }
+
+        return Storage::disk('public')->response($prescription->image);
     }
 }

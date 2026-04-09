@@ -34,6 +34,9 @@ class CartController extends Controller
             $hasValidPrescription = $user->prescriptions()
                 ->where('status', 'validated')
                 ->exists();
+            $hasUploadedPrescription = $user->prescriptions()
+                ->whereIn('status', ['pending', 'validated'])
+                ->exists();
             $hasPrescriptionRequiredItems = $items->contains(
                 fn ($item) => (bool) $item->medicament->requires_prescription
             );
@@ -44,6 +47,7 @@ class CartController extends Controller
                     'id' => $cart->id,
                     'pharmacy_id' => $pharmacyId,
                     'has_valid_prescription' => $hasValidPrescription,
+                    'has_uploaded_prescription' => $hasUploadedPrescription,
                     'has_prescription_required_items' => $hasPrescriptionRequiredItems,
                     'items' => $items->map(fn ($item) => [
                         'id' => $item->id,

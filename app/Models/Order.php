@@ -17,6 +17,7 @@ class Order extends Model
     protected $fillable = [
         'user_id',
         'pharmacy_id',
+        'prescription_id',
         'status',
         'total_price',
     ];
@@ -55,5 +56,13 @@ class Order extends Model
     public function items()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /**
+     * Get the prescription attached to the order (if any).
+     */
+    public function prescription()
+    {
+        return $this->belongsTo(Prescription::class);
     }
 }
