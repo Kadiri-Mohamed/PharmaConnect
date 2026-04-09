@@ -39,7 +39,7 @@ export default function Register() {
             <form className="flex flex-col gap-6" onSubmit={submit}>
                 <div className="grid gap-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="name">Name</Label>
+                        <Label htmlFor="name" className="text-[#2B3752]">Name</Label>
                         <Input
                             id="name"
                             type="text"
@@ -51,12 +51,13 @@ export default function Register() {
                             onChange={(e) => setData('name', e.target.value)}
                             disabled={processing}
                             placeholder="Full name"
+                            className="h-11 rounded-xl border-slate-300 focus-visible:ring-[#2E6E65]"
                         />
                         <InputError message={errors.name} className="mt-2" />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="email">Email address</Label>
+                        <Label htmlFor="email" className="text-[#2B3752]">Email address</Label>
                         <Input
                             id="email"
                             type="email"
@@ -67,12 +68,13 @@ export default function Register() {
                             onChange={(e) => setData('email', e.target.value)}
                             disabled={processing}
                             placeholder="email@example.com"
+                            className="h-11 rounded-xl border-slate-300 focus-visible:ring-[#2E6E65]"
                         />
                         <InputError message={errors.email} />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="password">Password</Label>
+                        <Label htmlFor="password" className="text-[#2B3752]">Password</Label>
                         <Input
                             id="password"
                             type="password"
@@ -83,12 +85,13 @@ export default function Register() {
                             onChange={(e) => setData('password', e.target.value)}
                             disabled={processing}
                             placeholder="Password"
+                            className="h-11 rounded-xl border-slate-300 focus-visible:ring-[#2E6E65]"
                         />
                         <InputError message={errors.password} />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="password_confirmation">Confirm password</Label>
+                        <Label htmlFor="password_confirmation" className="text-[#2B3752]">Confirm password</Label>
                         <Input
                             id="password_confirmation"
                             type="password"
@@ -99,14 +102,15 @@ export default function Register() {
                             onChange={(e) => setData('password_confirmation', e.target.value)}
                             disabled={processing}
                             placeholder="Confirm password"
+                            className="h-11 rounded-xl border-slate-300 focus-visible:ring-[#2E6E65]"
                         />
                         <InputError message={errors.password_confirmation} />
                     </div>
 
                     <div className="grid gap-3">
-                        <Label>Select your role</Label>
-                        <div className="flex items-center gap-6">
-                            <label className="flex items-center gap-2 text-sm">
+                        <Label className="text-[#2B3752]">Select your role</Label>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <label className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm">
                                 <input
                                     type="radio"
                                     name="role"
@@ -117,7 +121,7 @@ export default function Register() {
                                 />
                                 Client
                             </label>
-                            <label className="flex items-center gap-2 text-sm">
+                            <label className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm">
                                 <input
                                     type="radio"
                                     name="role"
@@ -132,15 +136,20 @@ export default function Register() {
                         <InputError message={errors.role} />
                     </div>
 
-                    <Button type="submit" className="mt-2 w-full" tabIndex={5} disabled={processing}>
+                    <Button
+                        type="submit"
+                        className="mt-2 h-11 w-full rounded-xl bg-[#2E6E65] text-white hover:bg-[#285f57]"
+                        tabIndex={5}
+                        disabled={processing}
+                    >
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                         Create account
                     </Button>
                 </div>
 
-                <div className="text-muted-foreground text-center text-sm">
+                <div className="text-center text-sm text-slate-600">
                     Already have an account?{' '}
-                    <TextLink href={route('login')} tabIndex={6}>
+                    <TextLink href={route('login')} className="text-[#2E6E65]" tabIndex={6}>
                         Log in
                     </TextLink>
                 </div>
