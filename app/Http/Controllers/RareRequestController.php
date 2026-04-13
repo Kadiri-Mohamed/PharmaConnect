@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreRareRequestRequest;
+use App\Http\Requests\UpdateRareRequestStatusRequest;
 use App\Models\RareRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -38,17 +40,11 @@ class RareRequestController extends Controller
     /**
      * Store a newly created rare request.
      *
-     * @param \Illuminate\Http\Request $request
      * @return JsonResponse
      */
-    public function store(\Illuminate\Http\Request $request): JsonResponse
+    public function store(StoreRareRequestRequest $request): JsonResponse
     {
         try {
-            $request->validate([
-                'medicine_name' => ['required', 'string', 'max:255'],
-                'description' => ['nullable', 'string'],
-            ]);
-
             $rareRequest = RareRequest::create([
                 'medicine_name' => $request->input('medicine_name'),
                 'description' => $request->input('description'),
@@ -65,11 +61,6 @@ class RareRequestController extends Controller
                     'created_at' => $rareRequest->created_at,
                 ],
             ], Response::HTTP_CREATED);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred while creating rare request',
@@ -80,16 +71,17 @@ class RareRequestController extends Controller
     /**
      * Update the status of a rare request.
      *
-     * @param \Illuminate\Http\Request $request
      * @param RareRequest $rareRequest
      * @return JsonResponse
      */
-    public function updateStatus(\Illuminate\Http\Request $request, RareRequest $rareRequest): JsonResponse
+    public function updateStatus(UpdateRareRequestStatusRequest $request, RareRequest $rareRequest): JsonResponse
     {
         try {
-            $request->validate([
-                'status' => ['required', 'string', 'in:pending,found,not_found'],
-            ]);
+            if (! auth()->user() || auth()->user()->role !== 'pharmacien') {
+                return response()->json([
+                    'message' => 'Unauthorized',
+                ], Response::HTTP_FORBIDDEN);
+            }
 
             $rareRequest->update([
                 'status' => $request->input('status'),
@@ -104,11 +96,6 @@ class RareRequestController extends Controller
                     'updated_at' => $rareRequest->updated_at,
                 ],
             ], Response::HTTP_OK);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred while updating rare request status',

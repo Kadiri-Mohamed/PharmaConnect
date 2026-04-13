@@ -9,6 +9,9 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+Route::get('/rare-requests/create', fn () => Inertia::render('RareRequests/Create'))
+    ->name('rare-requests.create');
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/prescriptions/{prescription}/file', [PrescriptionController::class, 'file'])
         ->name('prescriptions.file');
@@ -32,7 +35,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('pharmacien.medicaments');
 
         Route::get('/pharmacien/orders', fn () => Inertia::render('pharmacien/manage-orders'))->name('pharmacien.orders');
-        Route::get('/pharmacien/rare-requests', fn () => Inertia::render('pharmacien/manage-rare-requests'))->name('pharmacien.rare-requests');
+        Route::get('/pharmacien/rare-requests', fn () => Inertia::render('Pharmacien/RareRequests/Index'))
+            ->name('pharmacien.rare-requests');
     });
 
     Route::middleware(['role:client'])->group(function () {
@@ -46,7 +50,7 @@ Route::middleware(['auth'])->group(function () {
                 'pharmacyId' => (int) $pharmacy,
             ]);
         })->name('pharmacy.details');
-        Route::get('/rare-requests', fn () => Inertia::render('rare-requests'))->name('rare-requests');
+        Route::get('/rare-requests', fn () => Inertia::render('RareRequests/Index'))->name('rare-requests');
     });
 });
 

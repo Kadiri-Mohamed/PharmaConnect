@@ -2,6 +2,7 @@
 import '../css/app.css';
 
 import { createInertiaApp } from '@inertiajs/react';
+import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { route as routeFn } from 'ziggy-js';
 import { initializeTheme } from './hooks/use-appearance';
@@ -11,25 +12,27 @@ declare global {
 }
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const pages = {
+    ...import.meta.glob('./Pages/**/*.tsx'),
+    ...import.meta.glob('./Pages/**/*.jsx'),
+};
+
+const resolvePagePaths = (name: string) => {
+    const normalizedName = name.replace(/^pharmacien\//, 'Pharmacien/');
+
+    return Array.from(
+        new Set([
+            `./Pages/${name}.tsx`,
+            `./Pages/${name}.jsx`,
+            `./Pages/${normalizedName}.tsx`,
+            `./Pages/${normalizedName}.jsx`,
+        ]),
+    );
+};
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
-    resolve: async (name) => {
-        const pages = {
-            ...import.meta.glob('./Pages/**/*.jsx'),
-            ...import.meta.glob('./pages/**/*.tsx'),
-            ...import.meta.glob('./pages/**/*.jsx'),
-        };
-
-        const jsxUpperPath = `./Pages/${name}.jsx`; // required
-        const tsxPath = `./pages/${name}.tsx`;
-        const jsxLowerPath = `./pages/${name}.jsx`;
-
-        const loader = pages[jsxUpperPath] ?? pages[tsxPath] ?? pages[jsxLowerPath];
-
-        if (!loader) throw new Error(`Page not found: ${name}`);
-        return (await loader()) as never;
-    },
+    resolve: (name) => resolvePageComponent(resolvePagePaths(name), pages),
     setup({ el, App, props }) {
         createRoot(el).render(<App {...props} />);
     },

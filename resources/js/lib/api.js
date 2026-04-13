@@ -173,6 +173,6 @@ export const pharmaConnectApi = {
   rareRequests: {
     list: () => apiService.get('/rare-requests'),
     create: (data) => apiService.post('/rare-requests', data),
-    updateStatus: (id, status) => apiService.patch(`/rare-requests/${id}/status`, { status }),
+    updateStatus: (id, status) => apiService.patch(`/pharmacien/rare-requests/${id}/status`, { status }),
   },
 };
