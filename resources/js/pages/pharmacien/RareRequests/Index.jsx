@@ -41,14 +41,17 @@ export default function Index() {
         setSuccessMessage('');
 
         try {
-            await axios.patch(
+            const response = await axios.patch(
                 `/api/pharmacien/rare-requests/${requestId}/status`,
                 { status },
                 { headers: { Accept: 'application/json' } },
             );
 
+            const updatedRequest = response?.data?.data;
             setRequests((prev) =>
-                prev.map((request) => (request.id === requestId ? { ...request, status } : request)),
+                prev.map((request) =>
+                    request.id === requestId ? { ...request, ...(updatedRequest ?? {}) } : request,
+                ),
             );
             setSuccessMessage('Request status updated successfully.');
         } catch (error) {
@@ -83,6 +86,9 @@ export default function Index() {
                             <h1 className="text-2xl font-bold text-[#2E6E65]">Manage Rare Requests</h1>
                             <p className="mt-1 text-sm text-slate-600">
                                 Review client requests and update availability status.
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500">
+                                When you mark a request as found, clients will see your pharmacy contact details.
                             </p>
                         </div>
                         <button
@@ -147,6 +153,7 @@ export default function Index() {
                                         <th className="px-4 py-3">Medicine</th>
                                         <th className="px-4 py-3">Description</th>
                                         <th className="px-4 py-3">Status</th>
+                                        <th className="px-4 py-3">Found By</th>
                                         <th className="px-4 py-3">Date</th>
                                         <th className="px-4 py-3 text-right">Actions</th>
                                     </tr>
@@ -158,6 +165,22 @@ export default function Index() {
                                             <td className="px-4 py-3 text-slate-600">{request.description || '-'}</td>
                                             <td className="px-4 py-3">
                                                 <RareRequestStatusBadge status={request.status} />
+                                            </td>
+                                            <td className="px-4 py-3 text-slate-600">
+                                                {request.found_by_pharmacy ? (
+                                                    <div className="space-y-1">
+                                                        <p className="font-medium text-[#2B3752]">
+                                                            {request.found_by_pharmacy.name}
+                                                        </p>
+                                                        {request.found_by_pharmacy.phone && (
+                                                            <p className="text-xs text-slate-500">
+                                                                {request.found_by_pharmacy.phone}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-slate-400">-</span>
+                                                )}
                                             </td>
                                             <td className="px-4 py-3 text-slate-600">
                                                 {request.created_at ? new Date(request.created_at).toLocaleString() : '-'}

@@ -45,6 +45,40 @@ export default function RareRequestsIndexPage() {
         });
     }, [requests, search, statusFilter]);
 
+    const renderPharmacyContact = (request) => {
+        const pharmacy = request.found_by_pharmacy;
+
+        if (!pharmacy) {
+            if (request.status === 'found') {
+                return <span className="text-amber-600">Found, but pharmacy contact details are missing.</span>;
+            }
+
+            if (request.status === 'not_found') {
+                return <span className="text-slate-500">No pharmacy has confirmed availability yet.</span>;
+            }
+
+            return <span className="text-slate-400">Waiting for a pharmacy response.</span>;
+        }
+
+        return (
+            <div className="space-y-1">
+                <p className="font-medium text-[#2B3752]">{pharmacy.name}</p>
+                {pharmacy.pharmacist?.name && (
+                    <p className="text-xs text-slate-500">Ask for {pharmacy.pharmacist.name}</p>
+                )}
+                {pharmacy.phone && (
+                    <a href={`tel:${pharmacy.phone}`} className="block text-[#2E6E65] underline">
+                        {pharmacy.phone}
+                    </a>
+                )}
+                {pharmacy.address && <p className="text-xs text-slate-500">{pharmacy.address}</p>}
+                <Link href={`/pharmacies/${pharmacy.id}`} className="inline-flex text-xs font-semibold text-[#2E6E65] underline">
+                    View pharmacy
+                </Link>
+            </div>
+        );
+    };
+
     return (
         <Layout>
             <Head title="Rare Medicine Requests" />
@@ -123,6 +157,7 @@ export default function RareRequestsIndexPage() {
                                         <th className="px-4 py-3">Medicine</th>
                                         <th className="px-4 py-3">Description</th>
                                         <th className="px-4 py-3">Status</th>
+                                        <th className="px-4 py-3">Pharmacy Contact</th>
                                         <th className="px-4 py-3">Date</th>
                                     </tr>
                                 </thead>
@@ -133,6 +168,9 @@ export default function RareRequestsIndexPage() {
                                             <td className="px-4 py-3 text-slate-600">{request.description || '-'}</td>
                                             <td className="px-4 py-3">
                                                 <RareRequestStatusBadge status={request.status} />
+                                            </td>
+                                            <td className="px-4 py-3 text-slate-600">
+                                                {renderPharmacyContact(request)}
                                             </td>
                                             <td className="px-4 py-3 text-slate-600">
                                                 {request.created_at ? new Date(request.created_at).toLocaleString() : '-'}
