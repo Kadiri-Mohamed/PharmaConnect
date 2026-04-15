@@ -60,7 +60,7 @@ export default function ClientDashboard() {
                 } else {
                     throw cartResult.reason;
                 }
-            } catch (err) {
+            } catch {
                 setError('Unable to load dashboard data.');
             } finally {
                 setLoading(false);

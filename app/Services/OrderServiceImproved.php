@@ -160,29 +160,4 @@ class OrderServiceImproved
         return $order->refresh();
     }
 
-    /**
-     * Cancel order and restore stock.
-     *
-     * @param Order $order
-     * @return Order
-     * @throws DomainException
-     */
-    public function cancelOrderAndRestoreStock(Order $order): Order
-    {
-        return DB::transaction(function () use ($order) {
-            if ($order->status === 'delivered') {
-                throw new DomainException('Cannot cancel delivered order');
-            }
-
-            // Restore stock for all order items
-            foreach ($order->items as $item) {
-                $this->inventoryManager->increaseStockSafely(
-                    $item->medicament,
-                    $item->quantity
-                );
-            }
-
-            return $this->updateOrderStatus($order, 'cancelled');
-        });
-    }
 }

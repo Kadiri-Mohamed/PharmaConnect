@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AddToCartRequest;
-use App\Models\Cart;
 use App\Models\CartItem;
 use App\Services\CartService;
 use DomainException;

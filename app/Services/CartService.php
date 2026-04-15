@@ -6,7 +6,6 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Medicament;
 use DomainException;
-use Illuminate\Database\Eloquent\Collection;
 
 class CartService
 {
@@ -112,14 +111,4 @@ class CartService
         return $cart->items()->sum('quantity');
     }
 
-    /**
-     * Check if cart is empty.
-     *
-     * @param Cart $cart
-     * @return bool
-     */
-    public function isEmpty(Cart $cart): bool
-    {
-        return $cart->items()->count() === 0;
-    }
 }

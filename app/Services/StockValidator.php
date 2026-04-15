@@ -2,29 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\Medicament;
 use DomainException;
 use Illuminate\Database\Eloquent\Collection;
 
 class StockValidator
 {
-    /**
-     * Validate a single medicament has required stock.
-     *
-     * @param Medicament $medicament
-     * @param int $quantity
-     * @return bool
-     * @throws DomainException
-     */
-    public function validateAvailability(Medicament $medicament, int $quantity): bool
-    {
-        if ($quantity <= 0) {
-            throw new DomainException('Quantity must be greater than 0');
-        }
-
-        return $medicament->stock >= $quantity;
-    }
-
     /**
      * Validate all items in collection have required stock.
      *
