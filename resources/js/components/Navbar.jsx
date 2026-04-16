@@ -1,3 +1,4 @@
+import ThemeToggle from '@/components/ThemeToggle.jsx';
 import { Link, usePage } from '@inertiajs/react';
 import { Menu, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -36,15 +37,15 @@ export default function Navbar() {
     }
 
     return (
-        <header className="sticky top-0 z-50 border-b border-[#2E6E65]/10 bg-white/90 backdrop-blur">
+        <header className="sticky top-0 z-50 border-b border-[#2E6E65]/10 bg-white/90 backdrop-blur dark:border-slate-700 dark:bg-slate-900/90">
             <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-                <Link href={role === 'pharmacien' ? '/pharmacien/dashboard' : '/dashboard'} className="text-lg font-bold text-[#2E6E65]">
+                <Link href={role === 'pharmacien' ? '/pharmacien/dashboard' : '/dashboard'} className="text-lg font-bold text-[#2E6E65] dark:text-[#4CAF50]">
                     PharmaConnect
                 </Link>
 
                 <button
                     type="button"
-                    className="inline-flex items-center justify-center rounded-lg p-2 text-[#2B3752] hover:bg-[#F4F7ED] md:hidden"
+                    className="inline-flex items-center justify-center rounded-lg p-2 text-[#2B3752] hover:bg-[#F4F7ED] dark:text-[#F1F5F9] dark:hover:bg-slate-800 md:hidden"
                     onClick={() => setIsOpen((value) => !value)}
                     aria-label="Toggle menu"
                 >
@@ -62,14 +63,15 @@ export default function Navbar() {
                                 href={item.href}
                                 className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
                                     isActive
-                                        ? 'bg-[#2E6E65] text-white'
-                                        : 'text-[#2B3752] hover:bg-[#F4F7ED] hover:text-[#2E6E65]'
+                                        ? 'bg-[#2E6E65] text-white dark:bg-[#4CAF50]'
+                                        : 'text-[#2B3752] hover:bg-[#F4F7ED] hover:text-[#2E6E65] dark:text-[#F1F5F9] dark:hover:bg-slate-800 dark:hover:text-[#4CAF50]'
                                 }`}
                             >
                                 {item.label}
                             </Link>
                         );
                     })}
+                    <ThemeToggle />
                     <Link
                         href={route('logout')}
                         method="post"
@@ -82,7 +84,7 @@ export default function Navbar() {
             </div>
 
             {isOpen && (
-                <nav className="border-t border-[#2E6E65]/10 bg-white px-4 py-3 md:hidden">
+                <nav className="border-t border-[#2E6E65]/10 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900 md:hidden">
                     <div className="flex flex-col gap-2">
                         {links.map((item) => {
                             const itemPath = normalizePath(item.href);
@@ -93,7 +95,9 @@ export default function Navbar() {
                                     key={item.href}
                                     href={item.href}
                                     className={`rounded-lg px-3 py-2 text-sm font-medium ${
-                                        isActive ? 'bg-[#2E6E65] text-white' : 'text-[#2B3752] hover:bg-[#F4F7ED]'
+                                        isActive 
+                                            ? 'bg-[#2E6E65] text-white dark:bg-[#4CAF50]' 
+                                            : 'text-[#2B3752] hover:bg-[#F4F7ED] dark:text-[#F1F5F9] dark:hover:bg-slate-800'
                                     }`}
                                     onClick={() => setIsOpen(false)}
                                 >
@@ -101,11 +105,15 @@ export default function Navbar() {
                                 </Link>
                             );
                         })}
+                        <div className="flex items-center justify-between pb-2 pt-2">
+                            <span className="text-sm font-semibold text-[#2B3752] dark:text-[#F1F5F9]">Theme</span>
+                            <ThemeToggle />
+                        </div>
                         <Link
                             href={route('logout')}
                             method="post"
                             as="button"
-                            className="rounded-lg bg-[#4CAF50] px-3 py-2 text-left text-sm font-semibold text-white"
+                            className="rounded-lg bg-[#4CAF50] px-3 py-2 text-left text-sm font-semibold text-white hover:bg-[#409444]"
                             onClick={() => setIsOpen(false)}
                         >
                             Logout
