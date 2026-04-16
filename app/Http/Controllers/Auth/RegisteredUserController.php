@@ -48,10 +48,6 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        if ($user->role === 'pharmacien') {
-            return to_route('pharmacy.create');
-        }
-
-        return to_route('home');
+        return to_route('verification.notice');
     }
 }

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\URL;
 test('email verification screen can be rendered', function () {
     $user = User::factory()->unverified()->create();
 
-    $response = $this->actingAs($user)->get('/verify-email');
+    $response = $this->actingAs($user)->get('/email/verify');
 
     $response->assertStatus(200);
 });
@@ -43,4 +43,20 @@ test('email is not verified with invalid hash', function () {
     $this->actingAs($user)->get($verificationUrl);
 
     expect($user->fresh()->hasVerifiedEmail())->toBeFalse();
+});
+
+test('unverified users are redirected away from protected web pages', function () {
+    $user = User::factory()->unverified()->create();
+
+    $response = $this->actingAs($user)->get(route('dashboard'));
+
+    $response->assertRedirect(route('verification.notice', absolute: false));
+});
+
+test('unverified users cannot access protected api endpoints', function () {
+    $user = User::factory()->unverified()->create();
+
+    $response = $this->actingAs($user)->getJson('/api/orders');
+
+    $response->assertForbidden();
 });

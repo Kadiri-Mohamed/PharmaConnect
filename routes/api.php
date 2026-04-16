@@ -34,7 +34,7 @@ Route::post('/rare-requests', [RareRequestController::class, 'store'])->name('ap
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------

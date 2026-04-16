@@ -48,6 +48,7 @@ class HandleInertiaRequests extends Middleware
                         'id' => $request->user()->id,
                         'name' => $request->user()->name,
                         'email' => $request->user()->email,
+                        'email_verified_at' => $request->user()->email_verified_at?->toJSON(),
                         'role' => $request->user()->role,
                     ]
                     : null,
