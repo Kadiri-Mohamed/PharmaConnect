@@ -23,7 +23,7 @@ class MedicamentController extends Controller
             $formattedMedicaments[] = $this->formatMedicament($medicament);
         }
 
-        return Inertia::render('pharmacien/Medicaments/Index', [
+        return Inertia::render('pharmacien/medicaments/Index', [
             'medicaments' => $formattedMedicaments,
         ]);
     }

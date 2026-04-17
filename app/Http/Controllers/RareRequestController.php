@@ -11,19 +11,21 @@ class RareRequestController extends Controller
 {
     public function create()
     {
-        return Inertia::render('RareRequests/Create');
+        return Inertia::render('rare-requests', [
+            'requests' => [],
+        ]);
     }
     
     public function index()
     {
-        return Inertia::render('RareRequests/Index', [
+        return Inertia::render('rare-requests', [
             'requests' => $this->getRequests(),
         ]);
     }
     
     public function pharmacienIndex()
     {
-        return Inertia::render('Pharmacien/RareRequests/Index', [
+        return Inertia::render('pharmacien/manage-rare-requests', [
             'requests' => $this->getRequests(),
         ]);
     }

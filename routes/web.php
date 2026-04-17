@@ -49,13 +49,13 @@ Route::middleware(['auth'])->group(function () {
     // Pharmacist 
     Route::middleware(['role:pharmacien'])->group(function () {
         // Pharmacy
-        Route::get('/pharmacy/create', [PharmacyController::class, 'create'])->name('pharmacy.create');
+        Route::get('/create-pharmacy', [PharmacyController::class, 'create'])->name('pharmacy.create');
         Route::post('/pharmacy', [PharmacyController::class, 'store'])->name('pharmacy.store');
         
         // Dashboard 
         Route::get('/pharmacien/dashboard', [DashboardController::class, 'pharmacien'])->name('pharmacien.dashboard');
-        Route::get('/pharmacien/my-pharmacy', [PharmacyController::class, 'myPharmacy'])->name('pharmacien.my-pharmacy');
-        Route::patch('/pharmacien/my-pharmacy', [PharmacyController::class, 'updateMyPharmacy'])->name('pharmacien.my-pharmacy.update');
+        Route::get('/my-pharmacy', [PharmacyController::class, 'myPharmacy'])->name('pharmacien.my-pharmacy');
+        Route::patch('/my-pharmacy', [PharmacyController::class, 'updateMyPharmacy'])->name('pharmacien.my-pharmacy.update');
 
         // Medicament manage
         Route::get('/pharmacien/medicaments', [MedicamentController::class, 'pharmacienIndex'])->name('pharmacien.medicaments');

@@ -17,7 +17,7 @@ class PharmacyController extends Controller
             return redirect()->route('pharmacien.my-pharmacy');
         }
 
-        return Inertia::render('pharmacien/create-pharmacy');
+        return Inertia::render('create-pharmacy');
     }
 
     public function store(StorePharmacyRequest $request): RedirectResponse
@@ -42,7 +42,7 @@ class PharmacyController extends Controller
             abort(403);
         }
 
-        return Inertia::render('pharmacien/my-pharmacy', [
+        return Inertia::render('my-pharmacy', [
             'pharmacy' => [
                 'id' => $pharmacy->id,
                 'name' => $pharmacy->name,

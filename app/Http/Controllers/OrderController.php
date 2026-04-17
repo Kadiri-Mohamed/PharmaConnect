@@ -148,7 +148,7 @@ class OrderController extends Controller
             ];
         }
         
-        return Inertia::render('pharmacien/manage-orders', [
+        return Inertia::render('pharmacien/orders', [
             'orders' => $formattedOrders,
         ]);
     }

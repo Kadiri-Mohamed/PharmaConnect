@@ -38,7 +38,7 @@ class DashboardController extends Controller
             ];
         }
 
-        return Inertia::render('Client/Dashboard', [
+        return Inertia::render('dashboard', [
             'recentOrders' => $formattedOrders,
             'cartSummary' => [
                 'itemCount' => $this->cartService->getItemCount($cart),
