@@ -1,5 +1,5 @@
-import { Head } from '@inertiajs/react';
-import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
+import { Head, useForm, usePage } from '@inertiajs/react';
+import { ChangeEvent, FormEvent, useEffect, useRef } from 'react';
 import Layout from '@/layouts/Layout.jsx';
 
 interface Prescription {
@@ -7,87 +7,40 @@ interface Prescription {
     image: string;
     status: string;
     created_at: string;
+    file_url: string;
 }
 
-export default function PrescriptionsPage() {
-    const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [uploading, setUploading] = useState(false);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
-
-    const fetchPrescriptions = async () => {
-        setLoading(true);
-        setError('');
-
-        try {
-            const response = await fetch('/api/prescriptions', {
-                headers: { Accept: 'application/json' },
-                credentials: 'same-origin',
-            });
-
-            if (!response.ok) {
-                const data = await response.json().catch(() => ({}));
-                throw new Error(data?.message || 'Unable to load prescriptions.');
-            }
-
-            const data = await response.json();
-            setPrescriptions(data.data || []);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Unexpected error loading prescriptions.');
-        } finally {
-            setLoading(false);
-        }
+type PageProps = {
+    flash?: {
+        success?: string | null;
+        error?: string | null;
     };
+};
 
-    useEffect(() => {
-        fetchPrescriptions();
-    }, []);
+export default function PrescriptionsPage({ prescriptions = [] }: { prescriptions: Prescription[] }) {
+    const { flash } = usePage<PageProps>().props;
+    const form = useForm<{ image: File | null }>({ image: null });
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] ?? null;
-        setSelectedFile(file);
+        form.setData('image', file);
     };
 
-    const handleUpload = async (e: FormEvent) => {
+    useEffect(() => {
+        if (!form.data.image && fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    }, [form.data.image]);
+
+    const handleUpload = (e: FormEvent) => {
         e.preventDefault();
-        setSuccess('');
-        setError('');
 
-        if (!selectedFile) {
-            setError('Please choose a file to upload.');
-            return;
-        }
-
-        setUploading(true);
-        try {
-            const formData = new FormData();
-            formData.append('image', selectedFile);
-
-            const response = await fetch('/api/prescriptions', {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin',
-                headers: {
-                    Accept: 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                const data = await response.json().catch(() => ({}));
-                throw new Error(data?.message || 'Unable to upload prescription.');
-            }
-
-            const data = await response.json();
-            setSuccess(data?.message || 'Prescription uploaded successfully.');
-            setSelectedFile(null);
-            await fetchPrescriptions();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Unexpected error uploading prescription.');
-        } finally {
-            setUploading(false);
-        }
+        form.post(route('prescriptions.store'), {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => form.reset(),
+        });
     };
 
     return (
@@ -102,8 +55,8 @@ export default function PrescriptionsPage() {
                     </p>
                 </section>
 
-                {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
-                {success && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</div>}
+                {flash?.error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{flash.error}</div>}
+                {flash?.success && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{flash.success}</div>}
 
                 <section className="rounded-2xl bg-white p-6 shadow-sm">
                     <h2 className="text-lg font-semibold text-[#2B3752]">Upload New Prescription</h2>
@@ -111,27 +64,27 @@ export default function PrescriptionsPage() {
                         <div className="flex-1">
                             <label className="mb-1 block text-sm font-medium text-[#2B3752]">File (JPG, PNG, PDF, max 5MB)</label>
                             <input
+                                ref={fileInputRef}
                                 type="file"
                                 accept=".jpg,.jpeg,.png,.pdf"
                                 onChange={handleFileChange}
                                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                             />
+                            {form.errors.image && <p className="mt-1 text-xs text-red-600">{form.errors.image}</p>}
                         </div>
                         <button
                             type="submit"
-                            disabled={uploading}
+                            disabled={form.processing}
                             className="rounded-lg bg-[#2E6E65] px-4 py-2 text-sm font-semibold text-white hover:bg-[#285f57] disabled:opacity-60"
                         >
-                            {uploading ? 'Uploading...' : 'Upload'}
+                            {form.processing ? 'Uploading...' : 'Upload'}
                         </button>
                     </form>
                 </section>
 
                 <section className="rounded-2xl bg-white p-6 shadow-sm">
                     <h2 className="text-lg font-semibold text-[#2B3752]">My Uploads</h2>
-                    {loading ? (
-                        <p className="mt-4 text-sm text-slate-500">Loading prescriptions...</p>
-                    ) : prescriptions.length === 0 ? (
+                    {prescriptions.length === 0 ? (
                         <p className="mt-4 text-sm text-slate-500">No prescriptions uploaded yet.</p>
                     ) : (
                         <div className="mt-4 overflow-x-auto">
@@ -148,7 +101,7 @@ export default function PrescriptionsPage() {
                                         <tr key={item.id} className="border-b border-slate-100">
                                             <td className="px-2 py-3">
                                                 <a
-                                                    href={`/storage/${item.image}`}
+                                                    href={item.file_url}
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     className="text-[#2E6E65] hover:underline"

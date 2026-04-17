@@ -1,64 +1,26 @@
-import axios from 'axios';
-import { Head } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
 import RareRequestStatusBadge from '@/components/rare-requests/StatusBadge.jsx';
 import Layout from '@/layouts/Layout.jsx';
 
 const STATUS_OPTIONS = ['pending', 'found', 'not_found'];
 
-export default function Index() {
-    const [requests, setRequests] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [errorMessage, setErrorMessage] = useState('');
-    const [successMessage, setSuccessMessage] = useState('');
+export default function Index({ requests = [] }) {
+    const { flash } = usePage().props;
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [updatingRequestId, setUpdatingRequestId] = useState(null);
 
-    useEffect(() => {
-        fetchRequests();
-    }, []);
-
-    const fetchRequests = async () => {
-        setLoading(true);
-        setErrorMessage('');
-
-        try {
-            const response = await axios.get('/api/rare-requests', {
-                headers: { Accept: 'application/json' },
-            });
-            setRequests(response?.data?.data || []);
-        } catch (error) {
-            setErrorMessage(error?.response?.data?.message || 'Unable to load rare requests.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const updateStatus = async (requestId, status) => {
-        setUpdatingRequestId(requestId);
-        setErrorMessage('');
-        setSuccessMessage('');
-
-        try {
-            const response = await axios.patch(
-                `/api/pharmacien/rare-requests/${requestId}/status`,
-                { status },
-                { headers: { Accept: 'application/json' } },
-            );
-
-            const updatedRequest = response?.data?.data;
-            setRequests((prev) =>
-                prev.map((request) =>
-                    request.id === requestId ? { ...request, ...(updatedRequest ?? {}) } : request,
-                ),
-            );
-            setSuccessMessage('Request status updated successfully.');
-        } catch (error) {
-            setErrorMessage(error?.response?.data?.message || 'Unable to update request status.');
-        } finally {
-            setUpdatingRequestId(null);
-        }
+    const updateStatus = (requestId, status) => {
+        router.patch(
+            route('pharmacien.rare-requests.update-status', requestId),
+            { status },
+            {
+                preserveScroll: true,
+                onStart: () => setUpdatingRequestId(requestId),
+                onFinish: () => setUpdatingRequestId(null),
+            },
+        );
     };
 
     const filteredRequests = useMemo(() => {
@@ -93,7 +55,7 @@ export default function Index() {
                         </div>
                         <button
                             type="button"
-                            onClick={fetchRequests}
+                            onClick={() => router.reload({ preserveScroll: true, only: ['requests'] })}
                             className="rounded-lg bg-[#2E6E65] px-4 py-2 text-sm font-semibold text-white hover:bg-[#285f57]"
                         >
                             Refresh
@@ -126,21 +88,19 @@ export default function Index() {
                     </div>
                 </section>
 
-                {successMessage && (
+                {flash?.success && (
                     <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                        {successMessage}
+                        {flash.success}
                     </div>
                 )}
-                {errorMessage && (
+                {flash?.error && (
                     <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                        {errorMessage}
+                        {flash.error}
                     </div>
                 )}
 
                 <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
-                    {loading ? (
-                        <div className="p-8 text-center text-sm text-slate-500">Loading requests...</div>
-                    ) : filteredRequests.length === 0 ? (
+                    {filteredRequests.length === 0 ? (
                         <div className="p-8 text-center">
                             <p className="text-sm font-medium text-slate-700">No rare medicine requests.</p>
                             <p className="mt-1 text-xs text-slate-500">Incoming requests will appear here.</p>

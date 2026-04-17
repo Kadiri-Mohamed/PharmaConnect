@@ -2,27 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePrescriptionRequest;
 use App\Models\Prescription;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class PrescriptionController extends Controller
 {
-    /**
-     * List prescriptions for the authenticated client.
-     */
-    public function index(): JsonResponse
+    public function index()
     {
-        $user = auth()->user();
-        if (! $user || $user->role !== 'client') {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], Response::HTTP_FORBIDDEN);
-        }
-
-        $prescriptions = $user->prescriptions()
+        $prescriptions = auth()->user()->prescriptions()
             ->latest()
             ->get()
             ->map(fn (Prescription $prescription) => [
@@ -30,52 +20,28 @@ class PrescriptionController extends Controller
                 'image' => $prescription->image,
                 'status' => $prescription->status,
                 'created_at' => $prescription->created_at,
-            ]);
+                'file_url' => route('prescriptions.file', $prescription),
+            ])
+            ->values();
 
-        return response()->json([
-            'message' => 'Prescriptions retrieved successfully',
-            'data' => $prescriptions,
-        ], Response::HTTP_OK);
+        return Inertia::render('prescriptions', [
+            'prescriptions' => $prescriptions,
+        ]);
     }
 
-    /**
-     * Upload a new prescription for the authenticated client.
-     */
-    public function store(Request $request): JsonResponse
+    public function store(StorePrescriptionRequest $request)
     {
-        $user = auth()->user();
-        if (! $user || $user->role !== 'client') {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], Response::HTTP_FORBIDDEN);
-        }
+        $path = $request->file('image')->store('prescriptions', 'public');
 
-        $validated = $request->validate([
-            'image' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
-        ]);
-
-        $path = $validated['image']->store('prescriptions', 'public');
-
-        $prescription = Prescription::create([
-            'user_id' => $user->id,
+        Prescription::create([
+            'user_id' => $request->user()->id,
             'image' => $path,
             'status' => 'pending',
         ]);
 
-        return response()->json([
-            'message' => 'Prescription uploaded successfully. You can now place your order and the pharmacy will review it.',
-            'data' => [
-                'id' => $prescription->id,
-                'image' => $prescription->image,
-                'status' => $prescription->status,
-                'created_at' => $prescription->created_at,
-            ],
-        ], Response::HTTP_CREATED);
+        return back()->with('success', 'Prescription uploaded successfully.');
     }
 
-    /**
-     * Stream a prescription file for authorized users.
-     */
     public function file(Prescription $prescription)
     {
         $user = auth()->user();

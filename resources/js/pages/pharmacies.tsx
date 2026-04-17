@@ -1,42 +1,19 @@
-import { useEffect, useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import Layout from '@/layouts/Layout.jsx';
 
-export default function PharmaciesPage() {
-  const [pharmacies, setPharmacies] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+type Pharmacy = {
+  id: number;
+  name: string;
+  address: string;
+  phone: string;
+  status_garde: boolean;
+};
 
-  useEffect(() => {
-    fetchPharmacies();
-  }, []);
-
-  const fetchPharmacies = async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      const response = await fetch('/api/pharmacies', {
-        headers: { Accept: 'application/json' },
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        throw new Error('Unable to load pharmacies.');
-      }
-
-      const data = await response.json();
-      setPharmacies(data.data || data.pharmacies || data || []);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Unexpected error loading pharmacies.');
-    } finally {
-      setLoading(false);
-    }
-  };
+export default function PharmaciesPage({ pharmacies = [] }: { pharmacies: Pharmacy[] }) {
 
   return (
     <Layout>
-      <Head title="Pharmacies | PharmaConnect" />
+      <Head title="Pharmacies" />
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="rounded-[2rem] bg-white/95 px-6 py-8 shadow-lg shadow-slate-200/50 sm:px-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -50,18 +27,8 @@ export default function PharmaciesPage() {
           </div>
         </div>
 
-        {error && (
-          <div className="rounded-3xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700 shadow-sm">
-            {error}
-          </div>
-        )}
-
         <div className="grid gap-6 lg:grid-cols-2">
-          {loading ? (
-            <div className="col-span-full rounded-[2rem] border border-slate-200 bg-white/90 px-6 py-20 text-center text-slate-500 shadow-sm">
-              Loading pharmacies...
-            </div>
-          ) : pharmacies.length === 0 ? (
+          {pharmacies.length === 0 ? (
             <div className="col-span-full rounded-[2rem] border border-dashed border-slate-300 bg-slate-50 px-6 py-20 text-center text-slate-600">
               <p className="text-lg font-semibold">No pharmacies found.</p>
               <p className="mt-2 text-sm">Please check back later or adjust your search criteria.</p>

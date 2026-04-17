@@ -3,19 +3,12 @@
 namespace App\Services;
 
 use App\Models\Medicament;
+use App\Models\User;
 use DomainException;
 use Illuminate\Database\Eloquent\Collection;
 
 class StockValidator
 {
-    /**
-     * Validate a single medicament has required stock.
-     *
-     * @param Medicament $medicament
-     * @param int $quantity
-     * @return bool
-     * @throws DomainException
-     */
     public function validateAvailability(Medicament $medicament, int $quantity): bool
     {
         if ($quantity <= 0) {
@@ -25,13 +18,6 @@ class StockValidator
         return $medicament->stock >= $quantity;
     }
 
-    /**
-     * Validate all items in collection have required stock.
-     *
-     * @param Collection $cartItems
-     * @return void
-     * @throws DomainException
-     */
     public function validateCollectionAvailability(Collection $cartItems): void
     {
         foreach ($cartItems as $item) {
@@ -49,18 +35,10 @@ class StockValidator
         }
     }
 
-    /**
-     * Validate prescription requirements for cart items.
-     *
-     * @param Collection $cartItems
-     * @param \App\Models\User $user
-     * @return void
-     * @throws DomainException
-     */
-    public function validatePrescriptionRequirements(Collection $cartItems, \App\Models\User $user): void
+    public function validatePrescriptionRequirements(Collection $cartItems, User $user): void
     {
         $prescriptionRequired = $cartItems->filter(
-            fn($item) => $item->medicament->requires_prescription
+            fn ($item) => $item->medicament->requires_prescription
         );
 
         if ($prescriptionRequired->isEmpty()) {
@@ -79,18 +57,10 @@ class StockValidator
         }
     }
 
-    /**
-     * Check if collection is all from same pharmacy.
-     *
-     * @param Collection $cartItems
-     * @param int $expectedPharmacyId
-     * @return void
-     * @throws DomainException
-     */
     public function validatePharmacyConsistency(Collection $cartItems, int $expectedPharmacyId): void
     {
         $invalidItems = $cartItems->filter(
-            fn($item) => $item->medicament->pharmacy_id !== $expectedPharmacyId
+            fn ($item) => $item->medicament->pharmacy_id !== $expectedPharmacyId
         );
 
         if ($invalidItems->isNotEmpty()) {

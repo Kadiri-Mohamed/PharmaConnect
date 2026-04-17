@@ -1,10 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import Layout from '@/layouts/Layout.jsx';
-
-interface PharmacyDetailsProps {
-    pharmacyId: number;
-}
 
 interface Pharmacy {
     id: number;
@@ -25,52 +21,13 @@ interface Medicament {
     requires_prescription: boolean;
 }
 
-export default function PharmacyDetailsPage({ pharmacyId }: PharmacyDetailsProps) {
-    const [pharmacy, setPharmacy] = useState<Pharmacy | null>(null);
-    const [medicaments, setMedicaments] = useState<Medicament[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        const loadData = async () => {
-            setLoading(true);
-            setError('');
-
-            try {
-                const [pharmacyRes, medicamentsRes] = await Promise.all([
-                    fetch(`/api/pharmacies/${pharmacyId}`, {
-                        headers: { Accept: 'application/json' },
-                        credentials: 'same-origin',
-                    }),
-                    fetch(`/api/pharmacies/${pharmacyId}/medicaments`, {
-                        headers: { Accept: 'application/json' },
-                        credentials: 'same-origin',
-                    }),
-                ]);
-
-                if (!pharmacyRes.ok) {
-                    throw new Error('Unable to load pharmacy details.');
-                }
-
-                if (!medicamentsRes.ok) {
-                    throw new Error('Unable to load medicaments for this pharmacy.');
-                }
-
-                const pharmacyData = await pharmacyRes.json();
-                const medicamentsData = await medicamentsRes.json();
-
-                setPharmacy(pharmacyData?.data ?? null);
-                setMedicaments(medicamentsData?.data ?? []);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Unexpected error while loading pharmacy details.');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadData();
-    }, [pharmacyId]);
-
+export default function PharmacyDetailsPage({
+    pharmacy,
+    medicaments = [],
+}: {
+    pharmacy: Pharmacy | null;
+    medicaments: Medicament[];
+}) {
     const inStockCount = useMemo(
         () => medicaments.filter((item) => Number(item.stock ?? 0) > 0).length,
         [medicaments],
@@ -85,15 +42,7 @@ export default function PharmacyDetailsPage({ pharmacyId }: PharmacyDetailsProps
                     Back to Pharmacies
                 </Link>
 
-                {loading ? (
-                    <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
-                        Loading pharmacy details...
-                    </div>
-                ) : error ? (
-                    <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                        {error}
-                    </div>
-                ) : pharmacy ? (
+                {pharmacy ? (
                     <>
                         <section className="rounded-2xl bg-white p-6 shadow-sm">
                             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

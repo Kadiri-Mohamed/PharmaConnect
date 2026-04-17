@@ -1,6 +1,5 @@
-import axios from 'axios';
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { Head, Link } from '@inertiajs/react';
+import { useMemo } from 'react';
 import AppLayout from '@/layouts/AppLayout.jsx';
 
 const statusStyles = {
@@ -10,66 +9,10 @@ const statusStyles = {
     delivered: 'bg-emerald-100 text-emerald-700',
 };
 
-export default function ClientDashboard() {
-    const { auth } = usePage().props;
-    const user = auth?.user;
-    const [orders, setOrders] = useState([]);
-    const [cartSummary, setCartSummary] = useState({ itemCount: 0, totalPrice: 0 });
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-
-    const isNotFound = (err) => {
-        return err?.response?.status === 404;
-    };
-
-    useEffect(() => {
-        if (!user) return;
-
-        if (user.role === 'pharmacien') {
-            router.visit('/pharmacien/dashboard');
-            return;
-        }
-
-        const fetchData = async () => {
-            setLoading(true);
-            setError('');
-
-            try {
-                const ordersPromise = axios.get('/api/orders', { headers: { Accept: 'application/json' } });
-                const cartPromise = axios.get('/api/cart', { headers: { Accept: 'application/json' } });
-                const [ordersResult, cartResult] = await Promise.allSettled([ordersPromise, cartPromise]);
-
-                if (ordersResult.status === 'fulfilled') {
-                    const recentOrders = (ordersResult.value.data?.data ?? []).slice(0, 5);
-                    setOrders(recentOrders);
-                } else {
-                    setOrders([]);
-                }
-
-                if (cartResult.status === 'fulfilled') {
-                    const cartData = cartResult.value.data?.data;
-                    setCartSummary({
-                        itemCount: Number(cartData?.item_count ?? 0),
-                        totalPrice: Number(cartData?.total ?? 0),
-                    });
-                } else if (isNotFound(cartResult.reason)) {
-                    setCartSummary({
-                        itemCount: 0,
-                        totalPrice: 0,
-                    });
-                } else {
-                    throw cartResult.reason;
-                }
-            } catch (err) {
-                setError('Unable to load dashboard data.');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, [user]);
-
+export default function ClientDashboard({
+    recentOrders = [],
+    cartSummary = { itemCount: 0, totalPrice: 0 },
+}) {
     const recentSearches = useMemo(() => {
         try {
             const stored = localStorage.getItem('recent_medicament_searches');
@@ -90,21 +33,15 @@ export default function ClientDashboard() {
                     <p className="mt-1 text-sm text-slate-600">Track your recent orders and cart activity.</p>
                 </section>
 
-                {error && <section className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</section>}
-
                 <div className="grid gap-6 lg:grid-cols-3">
                     <section className="rounded-2xl bg-white p-6 shadow-sm">
                         <h2 className="text-sm font-semibold uppercase tracking-wide text-[#2B3752]">Cart Summary</h2>
-                        {loading ? (
-                            <p className="mt-4 text-sm text-slate-500">Loading...</p>
-                        ) : (
-                            <div className="mt-4 space-y-2">
-                                <p className="text-sm text-slate-600">Items: <span className="font-semibold text-[#2B3752]">{cartSummary.itemCount}</span></p>
-                                <p className="text-sm text-slate-600">
-                                    Total: <span className="font-semibold text-[#2B3752]">${cartSummary.totalPrice.toFixed(2)}</span>
-                                </p>
-                            </div>
-                        )}
+                        <div className="mt-4 space-y-2">
+                            <p className="text-sm text-slate-600">Items: <span className="font-semibold text-[#2B3752]">{cartSummary.itemCount}</span></p>
+                            <p className="text-sm text-slate-600">
+                                Total: <span className="font-semibold text-[#2B3752]">${Number(cartSummary.totalPrice ?? 0).toFixed(2)}</span>
+                            </p>
+                        </div>
                     </section>
 
                     <section className="rounded-2xl bg-white p-6 shadow-sm">
@@ -143,9 +80,7 @@ export default function ClientDashboard() {
                         </Link>
                     </div>
 
-                    {loading ? (
-                        <p className="text-sm text-slate-500">Loading orders...</p>
-                    ) : orders.length === 0 ? (
+                    {recentOrders.length === 0 ? (
                         <p className="text-sm text-slate-500">No recent orders.</p>
                     ) : (
                         <div className="overflow-x-auto">
@@ -159,7 +94,7 @@ export default function ClientDashboard() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {orders.map((order) => {
+                                    {recentOrders.map((order) => {
                                         const status = String(order.status || '').toLowerCase();
                                         const statusClass = statusStyles[status] ?? 'bg-slate-100 text-slate-700';
                                         const formattedDate = order.created_at ? new Date(order.created_at).toLocaleDateString() : '-';

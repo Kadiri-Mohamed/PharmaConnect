@@ -1,115 +1,72 @@
-import { useEffect, useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import Layout from '@/layouts/Layout.jsx';
 
-export default function PharmacienDashboard() {
-  const [dashboard, setDashboard] = useState({
-    pharmacy: null,
-    medicaments: [],
-    orders: [],
-    stats: {
-      totalMedicaments: 0,
-      lowStockCount: 0,
-      totalOrders: 0,
-    },
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+type Pharmacy = {
+  id: number;
+  name: string;
+  address: string;
+  phone: string;
+  status_garde: boolean;
+};
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+type Medicament = {
+  id: number;
+  name: string;
+  stock: number;
+};
 
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    setError('');
+type Order = {
+  id: number;
+  status: string;
+  total_price: number;
+  created_at: string;
+};
 
-    try {
-      // Fetch pharmacy info
-      const pharmacyResponse = await fetch('/api/pharmacien/pharmacy', {
-        headers: { Accept: 'application/json' },
-        credentials: 'same-origin',
-      });
+type Stats = {
+  totalMedicaments: number;
+  lowStockCount: number;
+  totalOrders: number;
+};
 
-      if (!pharmacyResponse.ok) {
-        throw new Error('Unable to load pharmacy information.');
-      }
-
-      const pharmacyData = await pharmacyResponse.json();
-
-      // Fetch medicaments
-      const medicamentsResponse = await fetch('/api/pharmacien/medicaments', {
-        headers: { Accept: 'application/json' },
-        credentials: 'same-origin',
-      });
-
-      const medicamentsData = await medicamentsResponse.json();
-
-      // Fetch orders
-      const ordersResponse = await fetch('/api/pharmacien/orders', {
-        headers: { Accept: 'application/json' },
-        credentials: 'same-origin',
-      });
-
-      const ordersData = await ordersResponse.json();
-
-      // Calculate stats
-      const medicaments = medicamentsData.data || medicamentsData.medicaments || [];
-      const orders = ordersData.data || ordersData.orders || [];
-      const lowStockCount = medicaments.filter(item => Number(item.stock ?? 0) <= 20).length;
-
-      setDashboard({
-        pharmacy: pharmacyData.data || pharmacyData.pharmacy || pharmacyData,
-        medicaments,
-        orders,
-        stats: {
-          totalMedicaments: medicaments.length,
-          lowStockCount,
-          totalOrders: orders.length,
-        },
-      });
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Unexpected error loading dashboard.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const recentOrders = dashboard.orders.slice(0, 5);
-  const lowStockMedicaments = dashboard.medicaments.filter(item => Number(item.stock ?? 0) <= 20);
+export default function PharmacienDashboard({
+  pharmacy,
+  medicaments = [],
+  recentOrders = [],
+  stats,
+}: {
+  pharmacy: Pharmacy;
+  medicaments: Medicament[];
+  recentOrders: Order[];
+  stats: Stats;
+}) {
+  const lowStockMedicaments = medicaments.filter((item) => Number(item.stock ?? 0) <= 20);
 
   return (
     <Layout>
-      <Head title="Dashboard | PharmaConnect" />
+      <Head title="Dashboard" />
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="rounded-[2rem] bg-white/95 px-6 py-8 shadow-lg shadow-slate-200/50 sm:px-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h1 className="text-3xl font-semibold text-[#2E6E65]">Dashboard</h1>
               <p className="mt-1 text-sm text-slate-600">
-                Welcome back, {dashboard.pharmacy?.name || 'Pharmacist'}
+                Welcome back, {pharmacy?.name || 'Pharmacist'}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <div className="rounded-3xl bg-[#2B3752] px-4 py-3 text-sm font-semibold text-white shadow-sm">
-                {dashboard.pharmacy?.status_garde ? 'De garde' : 'Normal hours'}
+                {pharmacy?.status_garde ? 'De garde' : 'Normal hours'}
               </div>
             </div>
           </div>
         </div>
-
-        {error && (
-          <div className="rounded-3xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700 shadow-sm">
-            {error}
-          </div>
-        )}
 
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="rounded-[2rem] bg-[#2E6E65] p-6 text-white shadow-lg shadow-slate-200/30">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.18em] text-[#A7DBC7]">Total medicaments</p>
-                <p className="mt-2 text-3xl font-semibold">{dashboard.stats.totalMedicaments}</p>
+                <p className="mt-2 text-3xl font-semibold">{stats.totalMedicaments}</p>
               </div>
               <div className="rounded-full bg-white/10 p-3">
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -123,8 +80,8 @@ export default function PharmacienDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.18em] text-slate-300">Low stock alerts</p>
-                <p className="mt-2 text-3xl font-semibold">{dashboard.stats.lowStockCount}</p>
-                <p className="mt-1 text-xs text-slate-300">Items with ≤20 units</p>
+                <p className="mt-2 text-3xl font-semibold">{stats.lowStockCount}</p>
+                <p className="mt-1 text-xs text-slate-300">Items with 20 units or less</p>
               </div>
               <div className="rounded-full bg-white/10 p-3">
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -138,8 +95,8 @@ export default function PharmacienDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm uppercase tracking-[0.18em] text-green-100">Total orders</p>
-                <p className="mt-2 text-3xl font-semibold">{dashboard.stats.totalOrders}</p>
-                <p className="mt-1 text-xs text-green-100">This month</p>
+                <p className="mt-2 text-3xl font-semibold">{stats.totalOrders}</p>
+                <p className="mt-1 text-xs text-green-100">All orders</p>
               </div>
               <div className="rounded-full bg-white/10 p-3">
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -163,9 +120,7 @@ export default function PharmacienDashboard() {
             </div>
 
             <div className="mt-4 space-y-3">
-              {loading ? (
-                <div className="py-8 text-center text-slate-500">Loading alerts...</div>
-              ) : lowStockMedicaments.length === 0 ? (
+              {lowStockMedicaments.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center text-slate-600">
                   <p className="text-sm font-medium">All medicaments are well stocked!</p>
                   <p className="mt-1 text-xs">No items below 20 units.</p>
@@ -198,9 +153,7 @@ export default function PharmacienDashboard() {
             </div>
 
             <div className="mt-4 space-y-3">
-              {loading ? (
-                <div className="py-8 text-center text-slate-500">Loading orders...</div>
-              ) : recentOrders.length === 0 ? (
+              {recentOrders.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center text-slate-600">
                   <p className="text-sm font-medium">No orders yet.</p>
                   <p className="mt-1 text-xs">Orders will appear here when customers place them.</p>
@@ -222,7 +175,7 @@ export default function PharmacienDashboard() {
                     <div key={order.id} className="flex items-center justify-between rounded-3xl border border-slate-200 bg-slate-50 p-4">
                       <div>
                         <p className="font-medium text-slate-900">Order #{order.id}</p>
-                        <p className="text-sm text-slate-600">${total} • {date}</p>
+                        <p className="text-sm text-slate-600">${total} | {date}</p>
                       </div>
                       <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${statusClass}`}>
                         {status}

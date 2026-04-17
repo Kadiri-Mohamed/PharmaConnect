@@ -5,116 +5,60 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreRareRequestRequest;
 use App\Http\Requests\UpdateRareRequestStatusRequest;
 use App\Models\RareRequest;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
+use Inertia\Inertia;
 
 class RareRequestController extends Controller
 {
-    /**
-     * Display a listing of rare requests.
-     *
-     * @return JsonResponse
-     */
-    public function index(): JsonResponse
+    public function create()
     {
-        try {
-            $requests = RareRequest::with('foundByPharmacy.user')
-                ->latest()
-                ->paginate(15);
-
-            return response()->json([
-                'message' => 'Rare requests retrieved successfully',
-                'data' => array_map(
-                    fn (RareRequest $rareRequest) => $this->serializeRareRequest($rareRequest),
-                    $requests->items()
-                ),
-                'pagination' => [
-                    'current_page' => $requests->currentPage(),
-                    'total' => $requests->total(),
-                    'per_page' => $requests->perPage(),
-                    'last_page' => $requests->lastPage(),
-                ],
-            ], Response::HTTP_OK);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred while retrieving rare requests',
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
+        return Inertia::render('RareRequests/Create');
     }
 
-    /**
-     * Store a newly created rare request.
-     *
-     * @return JsonResponse
-     */
-    public function store(StoreRareRequestRequest $request): JsonResponse
+    public function index()
     {
-        try {
-            $rareRequest = RareRequest::create([
-                'medicine_name' => $request->input('medicine_name'),
-                'description' => $request->input('description'),
-                'status' => 'pending',
-                'found_by_pharmacy_id' => null,
-            ]);
-
-            return response()->json([
-                'message' => 'Rare request created successfully',
-                'data' => $this->serializeRareRequest($rareRequest),
-            ], Response::HTTP_CREATED);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred while creating rare request',
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
+        return Inertia::render('RareRequests/Index', [
+            'requests' => $this->requests(),
+        ]);
     }
 
-    /**
-     * Update the status of a rare request.
-     *
-     * @param RareRequest $rareRequest
-     * @return JsonResponse
-     */
-    public function updateStatus(UpdateRareRequestStatusRequest $request, RareRequest $rareRequest): JsonResponse
+    public function pharmacienIndex()
     {
-        try {
-            $user = $request->user();
-
-            if (! $user || $user->role !== 'pharmacien') {
-                return response()->json([
-                    'message' => 'Unauthorized',
-                ], Response::HTTP_FORBIDDEN);
-            }
-
-            $status = $request->input('status');
-            $pharmacy = $user->pharmacy;
-
-            if ($status === 'found' && ! $pharmacy) {
-                return response()->json([
-                    'message' => 'Create your pharmacy profile before marking a request as found.',
-                ], Response::HTTP_UNPROCESSABLE_ENTITY);
-            }
-
-            $rareRequest->update([
-                'status' => $status,
-                'found_by_pharmacy_id' => $status === 'found' ? $pharmacy?->id : null,
-            ]);
-
-            return response()->json([
-                'message' => 'Rare request status updated successfully',
-                'data' => $this->serializeRareRequest($rareRequest->fresh()),
-            ], Response::HTTP_OK);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred while updating rare request status',
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
+        return Inertia::render('Pharmacien/RareRequests/Index', [
+            'requests' => $this->requests(),
+        ]);
     }
 
-    /**
-     * Transform a rare request for API responses.
-     *
-     * @return array<string, mixed>
-     */
+    public function store(StoreRareRequestRequest $request)
+    {
+        RareRequest::create([
+            'medicine_name' => $request->string('medicine_name')->toString(),
+            'description' => $request->filled('description')
+                ? $request->string('description')->toString()
+                : null,
+            'status' => 'pending',
+            'found_by_pharmacy_id' => null,
+        ]);
+
+        return back()->with('success', 'Rare request created successfully.');
+    }
+
+    public function updateStatus(UpdateRareRequestStatusRequest $request, RareRequest $rareRequest)
+    {
+        $status = $request->string('status')->toString();
+        $pharmacy = $request->user()->pharmacy;
+
+        if ($status === 'found' && ! $pharmacy) {
+            return back()->with('error', 'Create your pharmacy profile before marking a request as found.');
+        }
+
+        $rareRequest->update([
+            'status' => $status,
+            'found_by_pharmacy_id' => $status === 'found' ? $pharmacy?->id : null,
+        ]);
+
+        return back()->with('success', 'Rare request status updated.');
+    }
+
     private function serializeRareRequest(RareRequest $rareRequest): array
     {
         $rareRequest->loadMissing('foundByPharmacy.user');
@@ -141,5 +85,14 @@ class RareRequestController extends Controller
                 ] : null,
             ] : null,
         ];
+    }
+
+    private function requests()
+    {
+        return RareRequest::with('foundByPharmacy.user')
+            ->latest()
+            ->get()
+            ->map(fn (RareRequest $rareRequest) => $this->serializeRareRequest($rareRequest))
+            ->values();
     }
 }

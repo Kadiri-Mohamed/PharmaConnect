@@ -1,222 +1,134 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useMemo, useRef, useState } from 'react';
 import Layout from '@/layouts/Layout.jsx';
 
-export default function CartPage() {
-  const [cart, setCart] = useState({
-    items: [],
-    total_price: 0,
-    pharmacy_id: null,
-    has_valid_prescription: false,
-    has_uploaded_prescription: false,
-    has_prescription_required_items: false,
-  });
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [uploadLoading, setUploadLoading] = useState(false);
-  const [selectedPrescriptionFile, setSelectedPrescriptionFile] = useState<File | null>(null);
-  const [uploadMessage, setUploadMessage] = useState('');
-  const [error, setError] = useState('');
+type CartItem = {
+  id: number;
+  medicament_id: number;
+  pharmacy_id: number | null;
+  medicament_name: string | null;
+  price: number | null;
+  quantity: number;
+  subtotal: number;
+  requires_prescription: boolean;
+};
 
-  useEffect(() => {
-    fetchCart();
-  }, []);
+type CartData = {
+  id: number | null;
+  pharmacy_id: number | null;
+  has_valid_prescription: boolean;
+  has_uploaded_prescription: boolean;
+  has_prescription_required_items: boolean;
+  items: CartItem[];
+  total: number;
+  item_count: number;
+};
 
-  const fetchCart = async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      const response = await fetch('/api/cart', {
-        headers: {
-          Accept: 'application/json',
-        },
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        throw new Error('Unable to load cart.');
-      }
-
-      const data = await response.json();
-      const cartData = data.data || {};
-      setCart({
-        items: cartData.items || [],
-        total_price: Number(cartData.total || 0),
-        pharmacy_id: cartData.pharmacy_id ?? null,
-        has_valid_prescription: Boolean(cartData.has_valid_prescription),
-        has_uploaded_prescription: Boolean(cartData.has_uploaded_prescription),
-        has_prescription_required_items: Boolean(cartData.has_prescription_required_items),
-      });
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Unexpected error loading cart.');
-    } finally {
-      setLoading(false);
-    }
+type PageProps = {
+  flash?: {
+    success?: string | null;
+    error?: string | null;
   };
+};
 
-  const updateQuantity = async (itemId, quantity) => {
+const emptyCart: CartData = {
+  id: null,
+  pharmacy_id: null,
+  has_valid_prescription: false,
+  has_uploaded_prescription: false,
+  has_prescription_required_items: false,
+  items: [],
+  total: 0,
+  item_count: 0,
+};
+
+export default function CartPage({ cart = emptyCart }: { cart: CartData }) {
+  const { flash } = usePage<PageProps>().props;
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [creatingOrder, setCreatingOrder] = useState(false);
+  const [uploadingPrescription, setUploadingPrescription] = useState(false);
+  const [selectedPrescriptionFile, setSelectedPrescriptionFile] = useState<File | null>(null);
+  const [localError, setLocalError] = useState('');
+  const prescriptionInputRef = useRef<HTMLInputElement | null>(null);
+
+  const updateQuantity = (itemId: number, quantity: number) => {
     if (quantity < 1) return;
 
-    setActionLoading(true);
-    setError('');
-
-    try {
-      const response = await fetch(`/api/cart/${itemId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({ quantity }),
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        throw new Error('Unable to update quantity.');
-      }
-
-      await fetchCart();
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Unexpected error updating item.');
-    } finally {
-      setActionLoading(false);
-    }
+    setLocalError('');
+    router.put(
+      route('cart.update', itemId),
+      { quantity },
+      {
+        preserveScroll: true,
+        onStart: () => setBusyAction(`update-${itemId}`),
+        onFinish: () => setBusyAction(null),
+      },
+    );
   };
 
-  const removeItem = async (itemId) => {
-    setActionLoading(true);
-    setError('');
-
-    try {
-      const response = await fetch(`/api/cart/${itemId}`, {
-        method: 'DELETE',
-        headers: {
-          Accept: 'application/json',
-        },
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        throw new Error('Unable to remove item.');
-      }
-
-      await fetchCart();
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Unexpected error removing item.');
-    } finally {
-      setActionLoading(false);
-    }
+  const removeItem = (itemId: number) => {
+    setLocalError('');
+    router.delete(route('cart.destroy', itemId), {
+      preserveScroll: true,
+      onStart: () => setBusyAction(`remove-${itemId}`),
+      onFinish: () => setBusyAction(null),
+    });
   };
 
-  const clearCart = async () => {
-    setActionLoading(true);
-    setError('');
-
-    try {
-      const response = await fetch('/api/cart', {
-        method: 'DELETE',
-        headers: {
-          Accept: 'application/json',
-        },
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        throw new Error('Unable to clear cart.');
-      }
-
-      setCart({
-        items: [],
-        total_price: 0,
-        pharmacy_id: null,
-        has_valid_prescription: false,
-        has_uploaded_prescription: false,
-        has_prescription_required_items: false,
-      });
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Unexpected error clearing cart.');
-    } finally {
-      setActionLoading(false);
-    }
+  const clearCart = () => {
+    setLocalError('');
+    router.delete(route('cart.clear'), {
+      preserveScroll: true,
+      onStart: () => setBusyAction('clear'),
+      onFinish: () => setBusyAction(null),
+    });
   };
 
-  const createOrder = async () => {
-    setActionLoading(true);
-    setError('');
+  const createOrder = () => {
+    const pharmacyId =
+      cart.pharmacy_id ??
+      (cart.items.length > 0 ? Number(cart.items[0].pharmacy_id ?? 0) || null : null);
 
-    try {
-      const resolvedPharmacyId =
-        cart.pharmacy_id ??
-        (cart.items.length > 0 ? Number(cart.items[0].pharmacy_id ?? 0) || null : null);
-
-      if (!resolvedPharmacyId) {
-        throw new Error('Unable to detect pharmacy for this cart. Please re-add items.');
-      }
-
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({ pharmacy_id: resolvedPharmacyId }),
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data?.message || 'Unable to create order.');
-      }
-
-      window.location.href = '/orders';
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Unexpected error creating order.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const uploadPrescription = async () => {
-    if (!selectedPrescriptionFile) {
-      setError('Please choose a prescription file first.');
+    if (!pharmacyId) {
+      setLocalError('Unable to detect pharmacy for this cart. Please re-add your items.');
       return;
     }
 
-    setUploadLoading(true);
-    setError('');
-    setUploadMessage('');
+    setLocalError('');
+    router.post(
+      route('orders.store'),
+      { pharmacy_id: pharmacyId },
+      {
+        preserveScroll: true,
+        onStart: () => setCreatingOrder(true),
+        onFinish: () => setCreatingOrder(false),
+      },
+    );
+  };
 
-    try {
-      const formData = new FormData();
-      formData.append('image', selectedPrescriptionFile);
-
-      const response = await fetch('/api/prescriptions', {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-        },
-        body: formData,
-        credentials: 'same-origin',
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        const firstValidationError = data?.errors
-          ? Object.values(data.errors)?.[0]?.[0]
-          : null;
-        throw new Error(firstValidationError || data?.message || 'Unable to upload prescription.');
-      }
-
-      setUploadMessage(data?.message || 'Prescription uploaded successfully.');
-      setSelectedPrescriptionFile(null);
-      await fetchCart();
-    } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : 'Unexpected error uploading prescription.');
-    } finally {
-      setUploadLoading(false);
+  const uploadPrescription = () => {
+    if (!selectedPrescriptionFile) {
+      setLocalError('Please choose a prescription file first.');
+      return;
     }
+
+    setLocalError('');
+    router.post(
+      route('prescriptions.store'),
+      { image: selectedPrescriptionFile },
+      {
+        forceFormData: true,
+        preserveScroll: true,
+        onStart: () => setUploadingPrescription(true),
+        onSuccess: () => {
+          setSelectedPrescriptionFile(null);
+          if (prescriptionInputRef.current) {
+            prescriptionInputRef.current.value = '';
+          }
+        },
+        onFinish: () => setUploadingPrescription(false),
+      },
+    );
   };
 
   const totalPrice = useMemo(() => {
@@ -230,9 +142,12 @@ export default function CartPage() {
   const requiresPrescriptionButMissingUpload =
     cart.has_prescription_required_items && !cart.has_uploaded_prescription;
 
+  const errorMessage = localError || flash?.error;
+  const successMessage = flash?.success;
+
   return (
     <Layout>
-      <Head title="Cart | PharmaConnect" />
+      <Head title="Cart" />
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="rounded-[2rem] bg-white/90 px-6 py-6 shadow-lg shadow-slate-200/50 sm:px-8 sm:py-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -244,7 +159,7 @@ export default function CartPage() {
               <button
                 type="button"
                 onClick={clearCart}
-                disabled={actionLoading || !cart.items.length}
+                disabled={busyAction !== null || creatingOrder || !cart.items.length}
                 className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-[#2E6E65] hover:text-[#2E6E65] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Clear Cart
@@ -252,10 +167,10 @@ export default function CartPage() {
               <button
                 type="button"
                 onClick={createOrder}
-                disabled={actionLoading || !cart.items.length}
+                disabled={creatingOrder || busyAction !== null || !cart.items.length}
                 className="inline-flex items-center justify-center rounded-2xl bg-[#2E6E65] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#285a52] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {actionLoading ? 'Processing...' : 'Create Order'}
+                {creatingOrder ? 'Processing...' : 'Create Order'}
               </button>
             </div>
           </div>
@@ -273,6 +188,7 @@ export default function CartPage() {
             )}
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
               <input
+                ref={prescriptionInputRef}
                 type="file"
                 accept=".jpg,.jpeg,.png,.pdf"
                 onChange={(e) => setSelectedPrescriptionFile(e.target.files?.[0] || null)}
@@ -281,18 +197,19 @@ export default function CartPage() {
               <button
                 type="button"
                 onClick={uploadPrescription}
-                disabled={uploadLoading || !selectedPrescriptionFile}
+                disabled={uploadingPrescription || !selectedPrescriptionFile}
                 className="inline-flex items-center justify-center rounded-lg bg-[#2E6E65] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#285f57] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {uploadLoading ? 'Uploading...' : 'Upload Prescription'}
+                {uploadingPrescription ? 'Uploading...' : 'Upload Prescription'}
               </button>
             </div>
             <p className="mt-3 text-xs text-amber-700">After upload, you can create the order and the pharmacy will review it.</p>
-            {uploadMessage && (
-              <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
-                {uploadMessage}
-              </div>
-            )}
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="rounded-3xl border border-emerald-200 bg-emerald-50 px-6 py-4 text-sm text-emerald-700 shadow-sm">
+            {successMessage}
           </div>
         )}
 
@@ -304,9 +221,7 @@ export default function CartPage() {
             </div>
 
             <div className="min-w-full overflow-x-auto px-4 py-4 sm:px-6">
-              {loading ? (
-                <div className="space-y-3 py-10 text-center text-slate-500">Loading cart...</div>
-              ) : cart.items.length === 0 ? (
+              {cart.items.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-14 text-center text-slate-600">
                   <p className="text-lg font-medium">Your cart is empty.</p>
                   <p className="mt-2 text-sm">Add medicines from the pharmacy list to proceed.</p>
@@ -333,10 +248,12 @@ export default function CartPage() {
                     </thead>
                     <tbody>
                       {cart.items.map((item) => {
-                        const name = item.medicament_name || item.medicament?.name || item.name || 'Unknown medicament';
-                        const price = Number(item.price ?? item.medicament?.price ?? 0);
+                        const name = item.medicament_name || 'Unknown medicament';
+                        const price = Number(item.price ?? 0);
                         const quantity = Number(item.quantity ?? 0);
                         const subtotal = price * quantity;
+                        const itemIsBusy =
+                          busyAction === `update-${item.id}` || busyAction === `remove-${item.id}`;
 
                         return (
                           <tr key={item.id} className="border-t border-slate-200">
@@ -349,7 +266,7 @@ export default function CartPage() {
                                 <button
                                   type="button"
                                   onClick={() => updateQuantity(item.id, quantity - 1)}
-                                  disabled={quantity <= 1 || actionLoading}
+                                  disabled={quantity <= 1 || itemIsBusy || creatingOrder || uploadingPrescription}
                                   className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#2E6E65] transition hover:bg-[#2E6E65]/10 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   -
@@ -358,7 +275,7 @@ export default function CartPage() {
                                 <button
                                   type="button"
                                   onClick={() => updateQuantity(item.id, quantity + 1)}
-                                  disabled={actionLoading}
+                                  disabled={itemIsBusy || creatingOrder || uploadingPrescription}
                                   className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#2E6E65] text-white transition hover:bg-[#285a52] disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   +
@@ -370,7 +287,7 @@ export default function CartPage() {
                               <button
                                 type="button"
                                 onClick={() => removeItem(item.id)}
-                                disabled={actionLoading}
+                                disabled={itemIsBusy || creatingOrder || uploadingPrescription}
                                 className="rounded-2xl bg-[#4CAF50] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#43a047] disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 Remove
@@ -404,10 +321,10 @@ export default function CartPage() {
               <button
                 type="button"
                 onClick={createOrder}
-                disabled={cart.items.length === 0 || actionLoading || requiresPrescriptionButMissingUpload}
+                disabled={cart.items.length === 0 || creatingOrder || busyAction !== null || uploadingPrescription || requiresPrescriptionButMissingUpload}
                 className="w-full rounded-3xl bg-[#4CAF50] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#43a047] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {actionLoading ? 'Creating order...' : 'Create Order'}
+                {creatingOrder ? 'Creating order...' : 'Create Order'}
               </button>
               <Link
                 href="/pharmacies"
@@ -419,9 +336,9 @@ export default function CartPage() {
           </aside>
         </div>
 
-        {error && (
+        {errorMessage && (
           <div className="rounded-3xl border border-[#E53E3E]/20 bg-[#FDE8E8] px-6 py-4 text-sm text-[#9B2C2C] shadow-sm">
-            {error}
+            {errorMessage}
           </div>
         )}
       </div>

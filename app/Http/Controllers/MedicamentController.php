@@ -5,297 +5,128 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreMedicamentRequest;
 use App\Http\Requests\UpdateMedicamentRequest;
 use App\Models\Medicament;
-use App\Models\Pharmacy;
-use App\Services\MedicamentService;
 use DomainException;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Inertia\Inertia;
 
 class MedicamentController extends Controller
 {
-    /**
-     * Constructor to inject service.
-     *
-     * @param MedicamentService $medicamentService
-     */
-    public function __construct(private MedicamentService $medicamentService) {}
-
-    /**
-     * List medicaments that belong to the authenticated pharmacist pharmacy.
-     */
-    public function pharmacienIndex(Request $request): JsonResponse
+    public function pharmacienIndex(Request $request)
     {
-        $user = auth()->user();
-        if (! $user || $user->role !== 'pharmacien') {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], Response::HTTP_FORBIDDEN);
-        }
-
-        if (! $user->pharmacy) {
-            return response()->json([
-                'message' => 'No pharmacy found for this pharmacist.',
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
+        $pharmacy = $request->user()->pharmacy;
         $search = trim((string) $request->query('search', ''));
-        $stockFilter = (string) $request->query('stock', '');
+        $stock = (string) $request->query('stock', 'all');
         $perPage = min(max((int) $request->query('per_page', 10), 1), 50);
 
         $query = Medicament::query()
-            ->where('pharmacy_id', $user->pharmacy->id)
+            ->where('pharmacy_id', $pharmacy->id)
             ->latest();
 
         if ($search !== '') {
             $query->where('name', 'like', "%{$search}%");
         }
 
-        if ($stockFilter === 'in_stock') {
+        if ($stock === 'in_stock') {
             $query->where('stock', '>', 0);
-        } elseif ($stockFilter === 'out_of_stock') {
+        } elseif ($stock === 'out_of_stock') {
             $query->where('stock', '<=', 0);
         }
 
-        $medicaments = $query->paginate($perPage);
+        $medicaments = $query->paginate($perPage)->withQueryString();
 
-        return response()->json([
-            'message' => 'Medicaments retrieved successfully',
-            'data' => $medicaments->items(),
+        return Inertia::render('pharmacien/Medicaments/Index', [
+            'medicaments' => $medicaments->through(fn (Medicament $medicament) => $this->formatMedicament($medicament)),
             'pagination' => [
                 'current_page' => $medicaments->currentPage(),
-                'total' => $medicaments->total(),
-                'per_page' => $medicaments->perPage(),
                 'last_page' => $medicaments->lastPage(),
+                'per_page' => $medicaments->perPage(),
+                'total' => $medicaments->total(),
             ],
-        ], Response::HTTP_OK);
+            'filters' => [
+                'search' => $search,
+                'stock' => $stock,
+            ],
+        ]);
     }
 
-    /**
-     * Display a listing of medicaments.
-     *
-     * @return JsonResponse
-     */
-    public function index(): JsonResponse
+    public function index(Request $request)
     {
-        try {
-            $medicaments = Medicament::with('pharmacy')
-                ->paginate(15);
+        $search = trim((string) $request->query('search', ''));
 
-            return response()->json([
-                'message' => 'Medicaments retrieved successfully',
-                'data' => $medicaments->items(),
-                'pagination' => [
-                    'current_page' => $medicaments->currentPage(),
-                    'total' => $medicaments->total(),
-                    'per_page' => $medicaments->perPage(),
-                    'last_page' => $medicaments->lastPage(),
-                ],
-            ], Response::HTTP_OK);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred while retrieving medicaments',
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        $query = Medicament::query()
+            ->with('pharmacy')
+            ->latest();
+
+        if ($search !== '') {
+            $query->where(function ($medicaments) use ($search) {
+                $medicaments
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhereHas('pharmacy', fn ($pharmacy) => $pharmacy->where('name', 'like', "%{$search}%"));
+            });
         }
+
+        return Inertia::render('medicaments', [
+            'medicaments' => $query
+                ->get()
+                ->map(fn (Medicament $medicament) => $this->formatMedicament($medicament))
+                ->values(),
+            'filters' => [
+                'search' => $search,
+            ],
+        ]);
     }
 
-    /**
-     * Store a newly created medicament.
-     *
-     * @param StoreMedicamentRequest $request
-     * @return JsonResponse
-     */
-    public function store(StoreMedicamentRequest $request): JsonResponse
+    public function store(StoreMedicamentRequest $request)
     {
-        $user = auth()->user();
-        if (! $user || $user->role !== 'pharmacien') {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], Response::HTTP_FORBIDDEN);
-        }
-
-        if (! $user->pharmacy) {
-            return response()->json([
-                'message' => 'No pharmacy found for this pharmacist.',
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
         try {
-            $validated = $request->validated();
-            $validated['pharmacy_id'] = $user->pharmacy->id;
-            $medicament = Medicament::create($validated);
-
-            return response()->json([
-                'message' => 'Medicament created successfully',
-                'data' => $medicament,
-            ], Response::HTTP_CREATED);
+            Medicament::create([
+                ...$request->validated(),
+                'pharmacy_id' => $request->user()->pharmacy->id,
+            ]);
         } catch (DomainException $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], Response::HTTP_BAD_REQUEST);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred while creating medicament',
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return back()->with('error', $e->getMessage());
         }
+
+        return back()->with('success', 'Medicament created.');
     }
 
-    /**
-     * Display the specified medicament.
-     *
-     * @param Medicament $medicament
-     * @return JsonResponse
-     */
-    public function show(Medicament $medicament): JsonResponse
+    public function update(UpdateMedicamentRequest $request, Medicament $medicament)
     {
-        try {
-            $medicament->load('pharmacy');
-
-            $availability = $this->medicamentService->getAvailabilityStatus($medicament);
-
-            return response()->json([
-                'message' => 'Medicament retrieved successfully',
-                'data' => [
-                    'id' => $medicament->id,
-                    'name' => $medicament->name,
-                    'description' => $medicament->description,
-                    'price' => $medicament->price,
-                    'stock' => $medicament->stock,
-                    'requires_prescription' => $medicament->requires_prescription,
-                    'pharmacy' => [
-                        'id' => $medicament->pharmacy->id,
-                        'name' => $medicament->pharmacy->name,
-                    ],
-                    'availability' => $availability,
-                ],
-            ], Response::HTTP_OK);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred while retrieving medicament',
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Update the specified medicament.
-     *
-     * @param UpdateMedicamentRequest $request
-     * @param Medicament $medicament
-     * @return JsonResponse
-     */
-    public function update(UpdateMedicamentRequest $request, Medicament $medicament): JsonResponse
-    {
-        $user = auth()->user();
-        if (! $user || $user->role !== 'pharmacien') {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], Response::HTTP_FORBIDDEN);
-        }
-
-        if (! $user->pharmacy || $medicament->pharmacy_id !== $user->pharmacy->id) {
-            return response()->json([
-                'message' => 'You can only manage medicaments from your own pharmacy.',
-            ], Response::HTTP_FORBIDDEN);
-        }
+        abort_unless($medicament->pharmacy_id === $request->user()->pharmacy?->id, 403);
 
         try {
             $medicament->update($request->validated());
-
-            return response()->json([
-                'message' => 'Medicament updated successfully',
-                'data' => $medicament->fresh(),
-            ], Response::HTTP_OK);
         } catch (DomainException $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], Response::HTTP_BAD_REQUEST);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred while updating medicament',
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return back()->with('error', $e->getMessage());
         }
+
+        return back()->with('success', 'Medicament updated.');
     }
 
-    /**
-     * Remove the specified medicament.
-     *
-     * @param Medicament $medicament
-     * @return JsonResponse
-     */
-    public function destroy(Medicament $medicament): JsonResponse
+    public function destroy(Request $request, Medicament $medicament)
     {
-        $user = auth()->user();
-        if (! $user || $user->role !== 'pharmacien') {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], Response::HTTP_FORBIDDEN);
-        }
+        abort_unless($medicament->pharmacy_id === $request->user()->pharmacy?->id, 403);
 
-        if (! $user->pharmacy || $medicament->pharmacy_id !== $user->pharmacy->id) {
-            return response()->json([
-                'message' => 'You can only manage medicaments from your own pharmacy.',
-            ], Response::HTTP_FORBIDDEN);
-        }
+        $medicament->delete();
 
-        try {
-            $medicament->delete();
-
-            return response()->json([
-                'message' => 'Medicament deleted successfully',
-            ], Response::HTTP_OK);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred while deleting medicament',
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
+        return back()->with('success', 'Medicament deleted.');
     }
 
-    /**
-     * Display medicaments for a single pharmacy.
-     */
-    public function getByPharmacy(Pharmacy $pharmacy): JsonResponse
+    private function formatMedicament(Medicament $medicament): array
     {
-        $medicaments = $pharmacy->medicaments()->paginate(15);
-
-        return response()->json([
-            'message' => 'Medicaments retrieved successfully',
-            'data' => $medicaments->items(),
-            'pagination' => [
-                'current_page' => $medicaments->currentPage(),
-                'total' => $medicaments->total(),
-                'per_page' => $medicaments->perPage(),
-                'last_page' => $medicaments->lastPage(),
-            ],
-        ], Response::HTTP_OK);
-    }
-
-    /**
-     * Search medicaments by name.
-     */
-    public function search(Request $request): JsonResponse
-    {
-        $q = trim((string) $request->query('q', ''));
-
-        if ($q === '') {
-            return response()->json([
-                'message' => 'Query is required',
-                'data' => [],
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
-        $medicaments = Medicament::with('pharmacy')
-            ->where('name', 'like', "%{$q}%")
-            ->paginate(15);
-
-        return response()->json([
-            'message' => 'Medicaments retrieved successfully',
-            'data' => $medicaments->items(),
-            'pagination' => [
-                'current_page' => $medicaments->currentPage(),
-                'total' => $medicaments->total(),
-                'per_page' => $medicaments->perPage(),
-                'last_page' => $medicaments->lastPage(),
-            ],
-        ], Response::HTTP_OK);
+        return [
+            'id' => $medicament->id,
+            'name' => $medicament->name,
+            'description' => $medicament->description,
+            'price' => $medicament->price,
+            'stock' => $medicament->stock,
+            'requires_prescription' => (bool) $medicament->requires_prescription,
+            'pharmacy' => $medicament->relationLoaded('pharmacy') && $medicament->pharmacy ? [
+                'id' => $medicament->pharmacy->id,
+                'name' => $medicament->pharmacy->name,
+                'address' => $medicament->pharmacy->address,
+                'phone' => $medicament->pharmacy->phone,
+            ] : null,
+        ];
     }
 }

@@ -4,18 +4,17 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreRareRequestRequest extends FormRequest
+class UpdateCartItemRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return (bool) $this->user() && $this->user()->role === 'client';
     }
 
     public function rules(): array
     {
         return [
-            'medicine_name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'quantity' => ['required', 'integer', 'min:1'],
         ];
     }
 }

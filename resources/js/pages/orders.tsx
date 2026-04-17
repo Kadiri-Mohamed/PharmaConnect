@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import Layout from '@/layouts/Layout.jsx';
 
 const statusStyles = {
@@ -9,43 +8,30 @@ const statusStyles = {
   delivered: 'bg-emerald-100 text-emerald-700',
 };
 
-export default function OrdersPage() {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+type OrderRow = {
+  id: number;
+  pharmacy_name?: string | null;
+  pharmacy?: {
+    name?: string | null;
+  } | null;
+  status?: string | null;
+  total_price?: number | null;
+  created_at?: string | null;
+};
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      const response = await fetch('/api/orders', {
-        headers: {
-          Accept: 'application/json',
-        },
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        throw new Error('Unable to fetch orders.');
-      }
-
-      const data = await response.json();
-      setOrders(data.data || data.orders || []);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Unexpected error loading orders.');
-    } finally {
-      setLoading(false);
-    }
+type PageProps = {
+  flash?: {
+    success?: string | null;
+    error?: string | null;
   };
+};
+
+export default function OrdersPage({ orders = [] }: { orders: OrderRow[] }) {
+  const { flash } = usePage<PageProps>().props;
 
   return (
     <Layout>
-      <Head title="Orders | PharmaConnect" />
+      <Head title="Orders" />
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="rounded-[2rem] bg-white/95 px-6 py-8 shadow-lg shadow-slate-200/50 sm:px-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -59,6 +45,18 @@ export default function OrdersPage() {
           </div>
         </div>
 
+        {flash?.success && (
+          <div className="rounded-3xl border border-emerald-200 bg-emerald-50 px-6 py-4 text-sm text-emerald-700 shadow-sm">
+            {flash.success}
+          </div>
+        )}
+
+        {flash?.error && (
+          <div className="rounded-3xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700 shadow-sm">
+            {flash.error}
+          </div>
+        )}
+
         <section className="overflow-hidden rounded-[2rem] bg-white/90 shadow-lg shadow-slate-200/40">
           <div className="border-b border-slate-200 px-6 py-4 sm:px-8">
             <h2 className="text-xl font-semibold text-[#2B3752]">Order history</h2>
@@ -66,11 +64,7 @@ export default function OrdersPage() {
           </div>
 
           <div className="px-4 py-4 sm:px-6">
-            {loading ? (
-              <div className="py-10 text-center text-slate-500">Loading orders...</div>
-            ) : error ? (
-              <div className="rounded-3xl border border-red-200 bg-red-50 px-6 py-5 text-sm text-red-700">{error}</div>
-            ) : orders.length === 0 ? (
+            {orders.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-14 text-center text-slate-600">
                 <p className="text-lg font-medium">No orders yet.</p>
                 <p className="mt-2 text-sm">Browse pharmacies and add items to your cart to create your first order.</p>
@@ -97,7 +91,7 @@ export default function OrdersPage() {
                       return (
                         <tr key={order.id} className="border-t border-slate-200 hover:bg-slate-50">
                           <td className="px-4 py-4 sm:px-6">
-                            <Link href={`/orders/${order.id}`} className="font-medium text-slate-900 transition hover:text-[#2E6E65]">
+                            <Link href={route('orders.show', order.id)} className="font-medium text-slate-900 transition hover:text-[#2E6E65]">
                               {order.pharmacy_name || order.pharmacy?.name || 'Unknown pharmacy'}
                             </Link>
                           </td>
@@ -110,7 +104,7 @@ export default function OrdersPage() {
                           <td className="px-4 py-4 text-right text-sm text-slate-600 sm:px-6">{date}</td>
                           <td className="px-4 py-4 text-right sm:px-6">
                             <Link
-                              href={`/orders/${order.id}`}
+                              href={route('orders.show', order.id)}
                               className="inline-flex items-center rounded-full bg-[#2E6E65] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#285a52]"
                             >
                               View

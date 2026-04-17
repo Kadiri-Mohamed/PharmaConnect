@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateRareRequestStatusRequest extends FormRequest
+class UpdatePharmacyRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -14,7 +14,10 @@ class UpdateRareRequestStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', 'string', 'in:pending,found,not_found'],
+            'name' => ['required', 'string', 'max:255'],
+            'address' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:20'],
+            'status_garde' => ['nullable', 'boolean'],
         ];
     }
 }

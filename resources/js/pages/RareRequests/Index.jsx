@@ -1,35 +1,12 @@
-import axios from 'axios';
-import { Head, Link } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
 import RareRequestStatusBadge from '@/components/rare-requests/StatusBadge.jsx';
 import Layout from '@/layouts/Layout.jsx';
 
-export default function RareRequestsIndexPage() {
-    const [requests, setRequests] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [errorMessage, setErrorMessage] = useState('');
+export default function RareRequestsIndexPage({ requests = [] }) {
+    const { flash } = usePage().props;
     const [statusFilter, setStatusFilter] = useState('all');
     const [search, setSearch] = useState('');
-
-    useEffect(() => {
-        fetchRequests();
-    }, []);
-
-    const fetchRequests = async () => {
-        setLoading(true);
-        setErrorMessage('');
-
-        try {
-            const response = await axios.get('/api/rare-requests', {
-                headers: { Accept: 'application/json' },
-            });
-            setRequests(response?.data?.data || []);
-        } catch (error) {
-            setErrorMessage(error?.response?.data?.message || 'Unable to load rare requests.');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const filteredRequests = useMemo(() => {
         return requests.filter((request) => {
@@ -95,7 +72,7 @@ export default function RareRequestsIndexPage() {
                         <div className="flex items-center gap-3">
                             <button
                                 type="button"
-                                onClick={fetchRequests}
+                                onClick={() => router.reload({ preserveScroll: true, only: ['requests'] })}
                                 className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                             >
                                 Refresh
@@ -135,16 +112,20 @@ export default function RareRequestsIndexPage() {
                     </div>
                 </section>
 
-                {errorMessage && (
+                {flash?.error && (
                     <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                        {errorMessage}
+                        {flash.error}
+                    </div>
+                )}
+
+                {flash?.success && (
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                        {flash.success}
                     </div>
                 )}
 
                 <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
-                    {loading ? (
-                        <div className="p-8 text-center text-sm text-slate-500">Loading requests...</div>
-                    ) : filteredRequests.length === 0 ? (
+                    {filteredRequests.length === 0 ? (
                         <div className="p-8 text-center">
                             <p className="text-sm font-medium text-slate-700">No requests available.</p>
                             <p className="mt-1 text-xs text-slate-500">Create a new request to get started.</p>

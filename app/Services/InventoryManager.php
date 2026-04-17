@@ -8,14 +8,6 @@ use Illuminate\Support\Facades\DB;
 
 class InventoryManager
 {
-    /**
-     * Decrease stock with pessimistic locking to prevent race conditions.
-     *
-     * @param Medicament $medicament
-     * @param int $quantity
-     * @return Medicament
-     * @throws DomainException
-     */
     public function decreaseStockSafely(Medicament $medicament, int $quantity): Medicament
     {
         if ($quantity <= 0) {
@@ -23,11 +15,10 @@ class InventoryManager
         }
 
         return DB::transaction(function () use ($medicament, $quantity) {
-            // Lock the row for update to prevent concurrent modifications
             $lockedMedicament = Medicament::lockForUpdate()
                 ->find($medicament->id);
 
-            if (!$lockedMedicament) {
+            if (! $lockedMedicament) {
                 throw new DomainException('Medicament not found');
             }
 
@@ -39,20 +30,10 @@ class InventoryManager
             }
 
             $lockedMedicament->decrement('stock', $quantity);
-
-            // Return refreshed instance instead of using fresh()
             return $lockedMedicament->refresh();
         });
     }
 
-    /**
-     * Increase stock safely.
-     *
-     * @param Medicament $medicament
-     * @param int $quantity
-     * @return Medicament
-     * @throws DomainException
-     */
     public function increaseStockSafely(Medicament $medicament, int $quantity): Medicament
     {
         if ($quantity <= 0) {
@@ -63,7 +44,7 @@ class InventoryManager
             $lockedMedicament = Medicament::lockForUpdate()
                 ->find($medicament->id);
 
-            if (!$lockedMedicament) {
+            if (! $lockedMedicament) {
                 throw new DomainException('Medicament not found');
             }
 
@@ -72,14 +53,6 @@ class InventoryManager
         });
     }
 
-    /**
-     * Set stock to exact value with validation.
-     *
-     * @param Medicament $medicament
-     * @param int $quantity
-     * @return Medicament
-     * @throws DomainException
-     */
     public function setStockSafely(Medicament $medicament, int $quantity): Medicament
     {
         if ($quantity < 0) {
@@ -90,7 +63,7 @@ class InventoryManager
             $lockedMedicament = Medicament::lockForUpdate()
                 ->find($medicament->id);
 
-            if (!$lockedMedicament) {
+            if (! $lockedMedicament) {
                 throw new DomainException('Medicament not found');
             }
 
@@ -99,24 +72,11 @@ class InventoryManager
         });
     }
 
-    /**
-     * Check if medicament has sufficient stock (without locking).
-     *
-     * @param Medicament $medicament
-     * @param int $quantity
-     * @return bool
-     */
     public function hasAvailableStock(Medicament $medicament, int $quantity): bool
     {
         return $medicament->stock >= $quantity;
     }
 
-    /**
-     * Get detailed availability status.
-     *
-     * @param Medicament $medicament
-     * @return array
-     */
     public function getAvailabilityStatus(Medicament $medicament): array
     {
         return [
@@ -125,7 +85,7 @@ class InventoryManager
             'current_stock' => $medicament->stock,
             'is_available' => $medicament->stock > 0,
             'requires_prescription' => $medicament->requires_prescription,
-            'low_stock' => $medicament->stock < 5,  // Alert if low
+            'low_stock' => $medicament->stock < 5,
         ];
     }
 }

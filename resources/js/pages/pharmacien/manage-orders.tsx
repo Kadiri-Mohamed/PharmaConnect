@@ -1,6 +1,5 @@
-import axios from 'axios';
 import { Head, router, usePage } from '@inertiajs/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Layout from '@/layouts/Layout.jsx';
 
 const ORDER_STATUSES = ['pending', 'preparing', 'ready', 'delivered', 'cancelled'] as const;
@@ -13,14 +12,10 @@ const statusStyles: Record<string, string> = {
     cancelled: 'bg-rose-100 text-rose-700',
 };
 
-type PageAuthUser = {
-    id: number;
-    role: string;
-};
-
 type PageProps = {
-    auth?: {
-        user?: PageAuthUser;
+    flash?: {
+        success?: string | null;
+        error?: string | null;
     };
 };
 
@@ -48,53 +43,21 @@ type OrderRow = {
     } | null;
 };
 
-export default function ManageOrdersPage() {
-    const { auth } = usePage<PageProps>().props;
-    const user = auth?.user;
-
-    const [orders, setOrders] = useState<OrderRow[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [errorMessage, setErrorMessage] = useState('');
-    const [successMessage, setSuccessMessage] = useState('');
+export default function ManageOrdersPage({ orders = [] }: { orders: OrderRow[] }) {
+    const { flash } = usePage<PageProps>().props;
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [selectedStatuses, setSelectedStatuses] = useState<Record<number, string>>({});
     const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
 
-    const fetchOrders = useCallback(async () => {
-        setLoading(true);
-        setErrorMessage('');
-
-        try {
-            const response = await axios.get('/api/pharmacien/orders', {
-                headers: { Accept: 'application/json' },
-            });
-
-            const rows = (response.data?.data ?? []) as OrderRow[];
-            setOrders(rows);
-            setSelectedStatuses(
-                rows.reduce((carry: Record<number, string>, order) => {
-                    carry[order.id] = order.status ?? 'pending';
-                    return carry;
-                }, {}),
-            );
-        } catch (error: any) {
-            setErrorMessage(error?.response?.data?.message || 'Unable to load orders.');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
     useEffect(() => {
-        if (!user) return;
-
-        if (user.role !== 'pharmacien') {
-            router.visit('/dashboard');
-            return;
-        }
-
-        fetchOrders();
-    }, [user, fetchOrders]);
+        setSelectedStatuses(
+            orders.reduce((carry: Record<number, string>, order) => {
+                carry[order.id] = order.status ?? 'pending';
+                return carry;
+            }, {}),
+        );
+    }, [orders]);
 
     const handleStatusChange = (orderId: number, status: string) => {
         setSelectedStatuses((prev) => ({
@@ -103,30 +66,19 @@ export default function ManageOrdersPage() {
         }));
     };
 
-    const applyStatusUpdate = async (orderId: number) => {
+    const applyStatusUpdate = (orderId: number) => {
         const status = selectedStatuses[orderId];
         if (!status) return;
 
-        setUpdatingOrderId(orderId);
-        setErrorMessage('');
-        setSuccessMessage('');
-
-        try {
-            await axios.patch(
-                `/api/pharmacien/orders/${orderId}/status`,
-                { status },
-                { headers: { Accept: 'application/json' } },
-            );
-
-            setOrders((prev) =>
-                prev.map((order) => (order.id === orderId ? { ...order, status } : order)),
-            );
-            setSuccessMessage('Order status updated successfully.');
-        } catch (error: any) {
-            setErrorMessage(error?.response?.data?.message || 'Unable to update order status.');
-        } finally {
-            setUpdatingOrderId(null);
-        }
+        router.patch(
+            route('pharmacien.orders.update-status', orderId),
+            { status },
+            {
+                preserveScroll: true,
+                onStart: () => setUpdatingOrderId(orderId),
+                onFinish: () => setUpdatingOrderId(null),
+            },
+        );
     };
 
     const filteredOrders = useMemo(() => {
@@ -179,7 +131,7 @@ export default function ManageOrdersPage() {
                         </div>
                         <button
                             type="button"
-                            onClick={fetchOrders}
+                            onClick={() => router.reload({ preserveScroll: true, only: ['orders'] })}
                             className="rounded-lg bg-[#2E6E65] px-4 py-2 text-sm font-semibold text-white hover:bg-[#285f57]"
                         >
                             Refresh
@@ -214,13 +166,11 @@ export default function ManageOrdersPage() {
                     </div>
                 </section>
 
-                {successMessage && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{successMessage}</div>}
-                {errorMessage && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{errorMessage}</div>}
+                {flash?.success && <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{flash.success}</div>}
+                {flash?.error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{flash.error}</div>}
 
                 <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
-                    {loading ? (
-                        <div className="p-8 text-center text-sm text-slate-500">Loading orders...</div>
-                    ) : filteredOrders.length === 0 ? (
+                    {filteredOrders.length === 0 ? (
                         <div className="p-8 text-center">
                             <p className="text-sm font-medium text-slate-700">No orders found.</p>
                             <p className="mt-1 text-xs text-slate-500">New client orders will appear here.</p>

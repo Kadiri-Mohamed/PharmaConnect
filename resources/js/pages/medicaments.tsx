@@ -1,70 +1,73 @@
+import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
-import { Head } from '@inertiajs/react';
 import Layout from '@/layouts/Layout.jsx';
 
-export default function MedicamentsPage() {
-  const [medicaments, setMedicaments] = useState([]);
-  const [search, setSearch] = useState('');
+type Medicament = {
+  id: number;
+  name: string;
+  description?: string | null;
+  price: number;
+  stock: number;
+  requires_prescription: boolean;
+  pharmacy?: {
+    id: number;
+    name: string;
+    address: string;
+    phone: string;
+  } | null;
+};
+
+type PageProps = {
+  flash?: {
+    success?: string | null;
+    error?: string | null;
+  };
+};
+
+export default function MedicamentsPage({
+  medicaments = [],
+  filters = { search: '' },
+}: {
+  medicaments: Medicament[];
+  filters?: { search?: string };
+}) {
+  const { flash } = usePage<PageProps>().props;
+  const [search, setSearch] = useState(filters.search ?? '');
   const [pharmacyFilter, setPharmacyFilter] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [addingId, setAddingId] = useState<number | null>(null);
 
   useEffect(() => {
-    fetchMedicaments();
-  }, []);
+    const term = search.trim();
 
-  const fetchMedicaments = async () => {
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const response = await fetch('/api/medicaments', {
-        headers: { Accept: 'application/json' },
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        throw new Error('Unable to load medicaments.');
-      }
-
-      const data = await response.json();
-      setMedicaments(data.data || data.medicaments || data || []);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Unexpected error loading medicaments.');
-    } finally {
-      setLoading(false);
+    if (!term) {
+      return;
     }
-  };
 
-  const addToCart = async (itemId) => {
-    setActionLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const response = await fetch(`/api/cart`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({ medicament_id: itemId, quantity: 1 }),
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        throw new Error('Unable to add item to cart.');
+    const timeout = window.setTimeout(() => {
+      try {
+        const stored = localStorage.getItem('recent_medicament_searches');
+        const current = stored ? JSON.parse(stored) : [];
+        const history = Array.isArray(current) ? current : [];
+        const next = [term, ...history.filter((item) => item !== term)].slice(0, 5);
+        localStorage.setItem('recent_medicament_searches', JSON.stringify(next));
+      } catch {
+        return;
       }
+    }, 400);
 
-      setSuccess('Item added to cart successfully.');
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Unexpected error adding to cart.');
-    } finally {
-      setActionLoading(false);
-    }
+    return () => window.clearTimeout(timeout);
+  }, [search]);
+
+  const addToCart = (itemId: number) => {
+    router.post(
+      route('cart.store'),
+      { medicament_id: itemId, quantity: 1 },
+      {
+        preserveScroll: true,
+        onStart: () => setAddingId(itemId),
+        onFinish: () => setAddingId(null),
+      },
+    );
   };
 
   const pharmacyOptions = useMemo(() => {
@@ -76,7 +79,7 @@ export default function MedicamentsPage() {
 
   const filteredMedicaments = useMemo(() => {
     return medicaments.filter((item) => {
-      const name = String(item.name || item.title || '').toLowerCase();
+      const name = String(item.name || '').toLowerCase();
       const pharmacy = String(item.pharmacy?.name || '').toLowerCase();
       const query = search.trim().toLowerCase();
       const matchesSearch = !query || name.includes(query) || pharmacy.includes(query);
@@ -87,7 +90,7 @@ export default function MedicamentsPage() {
 
   return (
     <Layout>
-      <Head title="Medicaments | PharmaConnect" />
+      <Head title="Medicaments" />
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="rounded-[2rem] bg-white/95 px-6 py-8 shadow-lg shadow-slate-200/50 sm:px-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -136,34 +139,30 @@ export default function MedicamentsPage() {
           </div>
         </div>
 
-        {error && (
+        {flash?.error && (
           <div className="rounded-3xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700 shadow-sm">
-            {error}
+            {flash.error}
           </div>
         )}
 
-        {success && (
+        {flash?.success && (
           <div className="rounded-3xl border border-emerald-200 bg-emerald-50 px-6 py-4 text-sm text-emerald-700 shadow-sm">
-            {success}
+            {flash.success}
           </div>
         )}
 
         <div className="grid gap-6 lg:grid-cols-2">
-          {loading ? (
-            <div className="col-span-full rounded-[2rem] border border-slate-200 bg-white/90 px-6 py-20 text-center text-slate-500 shadow-sm">
-              Loading medicaments...
-            </div>
-          ) : filteredMedicaments.length === 0 ? (
+          {filteredMedicaments.length === 0 ? (
             <div className="col-span-full rounded-[2rem] border border-dashed border-slate-300 bg-slate-50 px-6 py-20 text-center text-slate-600">
               <p className="text-lg font-semibold">No medicaments found.</p>
               <p className="mt-2 text-sm">Adjust your search or pharmacy filter to discover more options.</p>
             </div>
           ) : (
             filteredMedicaments.map((item) => {
-              const name = item.name || item.title || 'Untitled medicament';
+              const name = item.name || 'Untitled medicament';
               const price = Number(item.price ?? 0).toFixed(2);
               const stock = Number(item.stock ?? 0);
-              const requiresPrescription = Boolean(item.requires_prescription ?? item.requiresPrescription);
+              const requiresPrescription = Boolean(item.requires_prescription);
               const pharmacyName = item.pharmacy?.name || 'Unknown pharmacy';
               const outOfStock = stock <= 0;
 
@@ -203,10 +202,10 @@ export default function MedicamentsPage() {
                     <button
                       type="button"
                       onClick={() => addToCart(item.id)}
-                      disabled={outOfStock || actionLoading}
+                      disabled={outOfStock || addingId === item.id}
                       className={`inline-flex items-center justify-center rounded-3xl px-5 py-3 text-sm font-semibold text-white transition ${outOfStock ? 'bg-slate-300 text-slate-600' : 'bg-[#2E6E65] hover:bg-[#285a52]'} disabled:cursor-not-allowed disabled:opacity-60`}
                     >
-                      Add to cart
+                      {addingId === item.id ? 'Adding...' : 'Add to cart'}
                     </button>
                   </div>
                 </div>

@@ -8,24 +8,14 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RoleMiddleware
 {
-    /**
-     * Handle an incoming request.
-     */
     public function handle(Request $request, Closure $next, string $role): Response
     {
         if (! $request->user() || $request->user()->role !== $role) {
             abort(403, 'Unauthorized action.');
         }
 
-        // Force pharmacist onboarding before allowing other pharmacist routes.
         if ($role === 'pharmacien' && ! $request->routeIs('pharmacy.create', 'pharmacy.store')) {
             if (! $request->user()->pharmacy) {
-                if ($request->expectsJson() || $request->is('api/*')) {
-                    return response()->json([
-                        'message' => 'Please create your pharmacy profile first.',
-                    ], 403);
-                }
-
                 return redirect()->route('pharmacy.create');
             }
         }
