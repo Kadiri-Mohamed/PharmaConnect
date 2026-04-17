@@ -16,9 +16,9 @@ class CartService
         }
 
         $medicament = Medicament::findOrFail($medicamentId);
-        $existingFirstItem = $cart->items()->with('medicament')->first();
+        $firstItem = $cart->items()->with('medicament')->first();
 
-        if ($existingFirstItem && $existingFirstItem->medicament->pharmacy_id !== $medicament->pharmacy_id) {
+        if ($firstItem && $firstItem->medicament->pharmacy_id !== $medicament->pharmacy_id) {
             throw new DomainException('Your cart already contains items from another pharmacy.');
         }
 
@@ -37,7 +37,7 @@ class CartService
 
     public function removeItem(CartItem $cartItem): bool
     {
-        return (bool) $cartItem->delete();
+        return $cartItem->delete();
     }
 
     public function updateQuantity(CartItem $cartItem, int $quantity): CartItem
@@ -57,20 +57,18 @@ class CartService
 
     public function calculateTotal(Cart $cart): float
     {
-        return $cart->items()->with('medicament')
-            ->get()
-            ->sum(function (CartItem $item) {
-                return $item->medicament->price * $item->quantity;
-            });
+        $items = $cart->items()->with('medicament')->get();
+        $total = 0;
+        
+        foreach ($items as $item) {
+            $total = $total + ($item->medicament->price * $item->quantity);
+        }
+        
+        return $total;
     }
 
     public function getItemCount(Cart $cart): int
     {
         return $cart->items()->sum('quantity');
-    }
-
-    public function isEmpty(Cart $cart): bool
-    {
-        return $cart->items()->count() === 0;
     }
 }

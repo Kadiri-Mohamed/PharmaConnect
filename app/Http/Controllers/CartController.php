@@ -15,46 +15,58 @@ class CartController extends Controller
 
     public function index()
     {
-        $cart = auth()->user()->cart()->firstOrCreate([]);
+        $user = auth()->user();
+        $cart = $user->cart()->firstOrCreate([]);
+        
+        $cartData = $this->getCartData($cart);
 
         return Inertia::render('cart', [
-            'cart' => $this->cartData($cart),
+            'cart' => $cartData,
         ]);
     }
 
     public function store(AddToCartRequest $request)
     {
         try {
-            $cart = $request->user()->cart()->firstOrCreate([]);
+            $user = $request->user();
+            $cart = $user->cart()->firstOrCreate([]);
+            
+            $medicamentId = $request->integer('medicament_id');
+            $quantity = $request->integer('quantity');
 
-            $this->cartService->addItem(
-                $cart,
-                $request->integer('medicament_id'),
-                $request->integer('quantity')
-            );
+            $this->cartService->addItem($cart, $medicamentId, $quantity);
+            
+            return back()->with('success', 'Item added to cart.');
         } catch (DomainException $e) {
             return back()->with('error', $e->getMessage());
         }
-
-        return back()->with('success', 'Item added to cart.');
     }
 
     public function update(UpdateCartItemRequest $request, CartItem $cartItem)
     {
-        abort_unless($cartItem->cart->user_id === $request->user()->id, 403);
+        $user = $request->user();
+        
+        if ($cartItem->cart->user_id !== $user->id) {
+            abort(403);
+        }
 
         try {
-            $this->cartService->updateQuantity($cartItem, $request->integer('quantity'));
+            $quantity = $request->integer('quantity');
+            $this->cartService->updateQuantity($cartItem, $quantity);
+            
+            return back()->with('success', 'Cart updated.');
         } catch (DomainException $e) {
             return back()->with('error', $e->getMessage());
         }
-
-        return back()->with('success', 'Cart updated.');
     }
 
     public function destroy(CartItem $cartItem)
     {
-        abort_unless($cartItem->cart->user_id === auth()->id(), 403);
+        $user = auth()->user();
+        
+        if ($cartItem->cart->user_id !== $user->id) {
+            abort(403);
+        }
 
         $this->cartService->removeItem($cartItem);
 
@@ -63,45 +75,79 @@ class CartController extends Controller
 
     public function clear()
     {
-        $cart = auth()->user()->cart()->firstOrCreate([]);
+        $user = auth()->user();
+        $cart = $user->cart()->firstOrCreate([]);
 
         $this->cartService->clearCart($cart);
 
         return back()->with('success', 'Cart cleared.');
     }
 
-    private function cartData($cart): array
+    private function getCartData($cart): array
     {
         $user = auth()->user();
         $items = $cart->items()->with('medicament')->get();
-        $pharmacyId = $items->first()?->medicament?->pharmacy_id;
-
+        
+        $pharmacyId = null;
+        $firstItem = $items->first();
+        if ($firstItem && $firstItem->medicament) {
+            $pharmacyId = $firstItem->medicament->pharmacy_id;
+        }
+        
+        $hasValidPrescription = $user->prescriptions()->where('status', 'validated')->doesntHave('orders')->exists();
+        
+        $hasUploadedPrescription = $user->prescriptions()->whereIn('status', ['pending', 'validated'])->doesntHave('orders')->exists();
+        
+        $hasPrescriptionRequiredItems = false;
+        foreach ($items as $item) {
+            if ($item->medicament && $item->medicament->requires_prescription) {
+                $hasPrescriptionRequiredItems = true;
+                break;
+            }
+        }
+        
+        $formattedItems = [];
+        foreach ($items as $item) {
+            $medicament = $item->medicament;
+            
+            $price = 0;
+            $medicamentName = null;
+            $itemPharmacyId = null;
+            $requiresPrescription = false;
+            
+            if ($medicament) {
+                $price = $medicament->price;
+                $medicamentName = $medicament->name;
+                $itemPharmacyId = $medicament->pharmacy_id;
+                $requiresPrescription = (bool) $medicament->requires_prescription;
+            }
+            
+            $subtotal = $price * $item->quantity;
+            
+            $formattedItems[] = [
+                'id' => $item->id,
+                'medicament_id' => $item->medicament_id,
+                'pharmacy_id' => $itemPharmacyId,
+                'medicament_name' => $medicamentName,
+                'price' => $price,
+                'quantity' => $item->quantity,
+                'subtotal' => $subtotal,
+                'requires_prescription' => $requiresPrescription,
+            ];
+        }
+        
+        $total = $this->cartService->calculateTotal($cart);
+        $itemCount = $this->cartService->getItemCount($cart);
+        
         return [
             'id' => $cart->id,
             'pharmacy_id' => $pharmacyId,
-            'has_valid_prescription' => $user->prescriptions()
-                ->where('status', 'validated')
-                ->doesntHave('orders')
-                ->exists(),
-            'has_uploaded_prescription' => $user->prescriptions()
-                ->whereIn('status', ['pending', 'validated'])
-                ->doesntHave('orders')
-                ->exists(),
-            'has_prescription_required_items' => $items->contains(
-                fn (CartItem $item) => (bool) $item->medicament?->requires_prescription
-            ),
-            'items' => $items->map(fn (CartItem $item) => [
-                'id' => $item->id,
-                'medicament_id' => $item->medicament_id,
-                'pharmacy_id' => $item->medicament?->pharmacy_id,
-                'medicament_name' => $item->medicament?->name,
-                'price' => $item->medicament?->price,
-                'quantity' => $item->quantity,
-                'subtotal' => ($item->medicament?->price ?? 0) * $item->quantity,
-                'requires_prescription' => (bool) $item->medicament?->requires_prescription,
-            ])->values(),
-            'total' => $this->cartService->calculateTotal($cart),
-            'item_count' => $this->cartService->getItemCount($cart),
+            'has_valid_prescription' => $hasValidPrescription,
+            'has_uploaded_prescription' => $hasUploadedPrescription,
+            'has_prescription_required_items' => $hasPrescriptionRequiredItems,
+            'items' => $formattedItems,
+            'total' => $total,
+            'item_count' => $itemCount,
         ];
     }
 }

@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Medicament;
 use App\Models\Order;
 use App\Services\CartService;
-use App\Services\OrderServiceImproved;
+use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -13,7 +13,7 @@ class DashboardController extends Controller
 {
     public function __construct(
         private CartService $cartService,
-        private OrderServiceImproved $orderService,
+        private OrderService $orderService,
     ) {}
 
     public function index(Request $request)
@@ -25,19 +25,21 @@ class DashboardController extends Controller
         }
 
         $cart = $user->cart()->firstOrCreate([]);
-        $recentOrders = $this->orderService->getUserOrders($user)
-            ->take(5)
-            ->map(fn (Order $order) => [
+        $recentOrders = $this->orderService->getUserOrders($user)->take(5);
+        
+        $formattedOrders = [];
+        foreach ($recentOrders as $order) {
+            $formattedOrders[] = [
                 'id' => $order->id,
                 'pharmacy_name' => $order->pharmacy?->name,
                 'status' => $order->status,
                 'total_price' => $order->total_price,
                 'created_at' => $order->created_at,
-            ])
-            ->values();
+            ];
+        }
 
         return Inertia::render('Client/Dashboard', [
-            'recentOrders' => $recentOrders,
+            'recentOrders' => $formattedOrders,
             'cartSummary' => [
                 'itemCount' => $this->cartService->getItemCount($cart),
                 'totalPrice' => $this->cartService->calculateTotal($cart),
@@ -48,31 +50,40 @@ class DashboardController extends Controller
     public function pharmacien(Request $request)
     {
         $pharmacy = $request->user()->pharmacy;
-
-        abort_unless($pharmacy, 403);
-
-        $medicaments = $pharmacy->medicaments()
-            ->latest()
-            ->get()
-            ->map(fn (Medicament $medicament) => [
+        
+        if (!$pharmacy) {
+            abort(403);
+        }
+        
+        $medicaments = $pharmacy->medicaments()->latest()->get();
+        
+        $formattedMedicaments = [];
+        foreach ($medicaments as $medicament) {
+            $formattedMedicaments[] = [
                 'id' => $medicament->id,
                 'name' => $medicament->name,
                 'stock' => $medicament->stock,
-            ])
-            ->values();
-
-        $recentOrders = Order::query()
-            ->where('pharmacy_id', $pharmacy->id)
-            ->latest()
-            ->take(5)
-            ->get()
-            ->map(fn (Order $order) => [
+            ];
+        }
+        
+        $recentOrders = Order::where('pharmacy_id', $pharmacy->id)->latest()->take(5)->get();
+            
+        $formattedOrders = [];
+        foreach ($recentOrders as $order) {
+            $formattedOrders[] = [
                 'id' => $order->id,
                 'status' => $order->status,
                 'total_price' => $order->total_price,
                 'created_at' => $order->created_at,
-            ])
-            ->values();
+            ];
+        }
+        
+        $lowStockCount = 0;
+        foreach ($formattedMedicaments as $medicament) {
+            if ($medicament['stock'] <= 20) {
+                $lowStockCount++;
+            }
+        }
 
         return Inertia::render('pharmacien-dashboard', [
             'pharmacy' => [
@@ -82,11 +93,11 @@ class DashboardController extends Controller
                 'phone' => $pharmacy->phone,
                 'status_garde' => (bool) $pharmacy->status_garde,
             ],
-            'medicaments' => $medicaments,
-            'recentOrders' => $recentOrders,
+            'medicaments' => $formattedMedicaments,
+            'recentOrders' => $formattedOrders,
             'stats' => [
-                'totalMedicaments' => $medicaments->count(),
-                'lowStockCount' => $medicaments->filter(fn (array $medicament) => $medicament['stock'] <= 20)->count(),
+                'totalMedicaments' => count($formattedMedicaments),
+                'lowStockCount' => $lowStockCount,
                 'totalOrders' => $pharmacy->orders()->count(),
             ],
         ]);
