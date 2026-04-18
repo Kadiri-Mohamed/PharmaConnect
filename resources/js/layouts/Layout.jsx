@@ -12,13 +12,11 @@ const clientLinks = [
     { href: '/medicaments', label: 'Medicaments' },
     { href: '/cart', label: 'Cart' },
     { href: '/orders', label: 'Orders' },
-    { href: '/prescriptions', label: 'Prescriptions' },
     { href: '/rare-requests', label: 'Rare Requests' },
 ];
 
 const pharmacistLinks = [
     { href: '/pharmacien/dashboard', label: 'Dashboard' },
-    { href: '/create-pharmacy', label: 'Create Pharmacy' },
     { href: '/my-pharmacy', label: 'My Pharmacy' },
     { href: '/pharmacien/medicaments', label: 'Medicaments' },
     { href: '/pharmacien/orders', label: 'Orders' },
@@ -29,34 +27,38 @@ export default function Layout({ children }) {
     const page = usePage();
     const user = page.props.auth?.user;
     const currentUrl = page.url.split('?')[0];
-    const links = !user
-        ? guestLinks
-        : user.role === 'pharmacien'
-          ? pharmacistLinks
-          : clientLinks;
+    const links = !user ? guestLinks : user.role === 'pharmacien' ? pharmacistLinks : clientLinks;
+    const linkClasses = (active) => active? 'rounded-xl border border-pharmacy-light/30 bg-pharmacy-medium/25 px-4 py-2 text-sm font-semibold text-white shadow-sm': 'rounded-xl px-4 py-2 text-sm font-medium text-pharmacy-light/85 hover:bg-white/10 hover:text-white';
 
     return (
-        <div className="min-h-screen bg-gray-100 text-gray-900">
-            <nav className="border-b bg-white shadow-sm">
+        <div className="min-h-screen text-slate-700">
+            <nav className="sticky top-0 z-40 border-b border-pharmacy-light/15 bg-pharmacy-deepest/95 backdrop-blur">
                 <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-                    <Link href="/" className="text-xl font-bold">
-                        Pharma System
+                    <Link href="/" className="flex items-center gap-3 text-white">
+                        <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-pharmacy-light/25 bg-pharmacy-light/12 text-sm font-bold text-pharmacy-light">
+                            Rx
+                        </span>
+                        <span>
+                            <span className="block text-xl font-bold">Pharma System</span>
+                            <span className="block text-xs uppercase tracking-[0.22em] text-pharmacy-light/70">
+                                Pharmacy platform
+                            </span>
+                        </span>
                     </Link>
 
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                        {user && (
+                            <span className="rounded-full border border-pharmacy-light/25 bg-pharmacy-light/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-pharmacy-light/80">
+                                {user.role}
+                            </span>
+                        )}
                         {links.map((link) => {
                             const active =
                                 currentUrl === link.href ||
                                 (link.href !== '/' && currentUrl.startsWith(`${link.href}/`));
 
                             return (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    className={`rounded-lg px-3 py-2 text-sm ${
-                                        active ? 'bg-gray-900 text-white' : 'border bg-white'
-                                    }`}
-                                >
+                                <Link key={link.href} href={link.href} className={linkClasses(active)}>
                                     {link.label}
                                 </Link>
                             );
@@ -64,10 +66,16 @@ export default function Layout({ children }) {
 
                         {!user && (
                             <>
-                                <Link href="/login" className="rounded-lg border bg-white px-3 py-2 text-sm">
+                                <Link
+                                    href="/login"
+                                    className="rounded-xl border border-pharmacy-light/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+                                >
                                     Login
                                 </Link>
-                                <Link href="/register" className="rounded-lg bg-gray-900 px-3 py-2 text-sm text-white">
+                                <Link
+                                    href="/register"
+                                    className="rounded-xl bg-pharmacy-medium px-4 py-2 text-sm font-semibold text-white hover:bg-pharmacy-dark"
+                                >
                                     Register
                                 </Link>
                             </>
@@ -78,7 +86,7 @@ export default function Layout({ children }) {
                                 href="/logout"
                                 method="post"
                                 as="button"
-                                className="rounded-lg border bg-white px-3 py-2 text-sm"
+                                className="rounded-xl border border-pharmacy-light/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
                             >
                                 Logout
                             </Link>
@@ -87,7 +95,7 @@ export default function Layout({ children }) {
                 </div>
             </nav>
 
-            <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+            <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
         </div>
     );
 }

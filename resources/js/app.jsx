@@ -6,17 +6,23 @@ import { createRoot } from 'react-dom/client';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Pharmacy';
 const pages = import.meta.glob('./Pages/**/*.jsx');
-const resolvePagePaths = (name) => {
-    const normalizedName = name.replace(/^pharmacien\//, 'Pharmacien/');
+const pagePathsByLowercase = Object.fromEntries(
+    Object.keys(pages).map((path) => [path.toLowerCase(), path]),
+);
+const resolvePage = (name) => {
+    const requestedPath = `./Pages/${name}.jsx`;
 
-    return [...new Set([`./Pages/${name}.jsx`, `./Pages/${normalizedName}.jsx`])];
+    return resolvePageComponent(
+        pagePathsByLowercase[requestedPath.toLowerCase()] ?? requestedPath,
+        pages,
+    );
 };
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
-    resolve: (name) => resolvePageComponent(resolvePagePaths(name), pages),
+    resolve: resolvePage,
     setup({ el, App, props }) {
         createRoot(el).render(<App {...props} />);
     },
-    progress: { color: '#111827' },
+    progress: { color: '#2A7A9D' },
 });

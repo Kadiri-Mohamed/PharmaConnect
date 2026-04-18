@@ -18,13 +18,25 @@ export default function ForgotPasswordPage({ status }) {
         <Layout>
             <Head title="Forgot Password" />
             <div className="mx-auto max-w-md space-y-6">
-                <div className="rounded-lg border bg-white p-6 shadow"><h1 className="text-2xl font-bold">Forgot Password</h1></div>
+                <div className="hero-card">
+                    <p className="section-kicker">Account Recovery</p>
+                    <h1 className="mt-2 text-3xl font-semibold">Forgot Password</h1>
+                    <p className="mt-2 text-sm text-slate-600">
+                        Enter your email address and we will send you a reset link.
+                    </p>
+                </div>
                 <FlashMessages flash={flash} status={status} />
-                <form onSubmit={submit} className="rounded-lg border bg-white p-6 shadow">
-                    <label className="block text-sm font-medium">Email</label>
-                    <input value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 w-full rounded-lg border px-3 py-2 text-sm" />
+                <form onSubmit={submit} className="page-card-static">
+                    <label className="form-label">Email</label>
+                    <input
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        className="form-input"
+                    />
                     <FormError message={errors.email} />
-                    <button type="submit" className="mt-4 w-full rounded-lg bg-gray-900 px-4 py-2 text-sm text-white" disabled={loading}>{loading ? 'Sending...' : 'Send reset link'}</button>
+                    <button type="submit" className="btn-primary mt-4 w-full" disabled={loading}>
+                        {loading ? 'Sending...' : 'Send reset link'}
+                    </button>
                 </form>
             </div>
         </Layout>

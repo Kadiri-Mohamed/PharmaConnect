@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import Layout from '@/layouts/Layout.jsx';
+import { formatCurrency, formatStatusLabel, getOrderStatusBadgeClass } from '@/utils/ui.js';
 
 export default function Dashboard({ recentOrders = [], cartSummary = { itemCount: 0, totalPrice: 0 } }) {
     return (
@@ -7,61 +8,100 @@ export default function Dashboard({ recentOrders = [], cartSummary = { itemCount
             <Head title="Dashboard" />
 
             <div className="space-y-6">
-                <div className="rounded-lg border bg-white p-6 shadow">
-                    <h1 className="text-2xl font-bold">Client Dashboard</h1>
-                    <p className="mt-2 text-sm text-gray-600">A simple overview of your cart and latest orders.</p>
+                <div className="hero-card">
+                    <p className="section-kicker">Client Portal</p>
+                    <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 className="text-3xl font-semibold">Client Dashboard</h1>
+                            <p className="mt-2 max-w-2xl text-sm text-slate-600">
+                                Keep an eye on your cart, current spending, and the latest activity from your
+                                orders.
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            <Link href="/medicaments" className="btn-secondary">
+                                Browse medicaments
+                            </Link>
+                            <Link href="/cart" className="btn-primary">
+                                Open cart
+                            </Link>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-3">
-                    <div className="rounded-lg border bg-white p-5 shadow">
-                        <p className="text-sm text-gray-500">Cart Items</p>
-                        <p className="mt-2 text-3xl font-bold">{cartSummary.itemCount}</p>
+                    <div className="page-card bg-gradient-to-br from-pharmacy-light via-white to-pharmacy-lighter/70 hover:scale-[1.02]">
+                        <p className="section-kicker">Cart Items</p>
+                        <p className="mt-3 text-3xl font-bold text-pharmacy-dark">{cartSummary.itemCount}</p>
+                        <p className="mt-2 text-sm text-slate-600">Items currently waiting for checkout.</p>
                     </div>
-                    <div className="rounded-lg border bg-white p-5 shadow">
-                        <p className="text-sm text-gray-500">Cart Total</p>
-                        <p className="mt-2 text-3xl font-bold">${Number(cartSummary.totalPrice || 0).toFixed(2)}</p>
+                    <div className="page-card bg-gradient-to-br from-pharmacy-light via-white to-pharmacy-lighter/70 hover:scale-[1.02]">
+                        <p className="section-kicker">Cart Total</p>
+                        <p className="mt-3 text-3xl font-bold text-pharmacy-dark">
+                            {formatCurrency(cartSummary.totalPrice)}
+                        </p>
+                        <p className="mt-2 text-sm text-slate-600">A live total based on the items in your cart.</p>
                     </div>
-                    <div className="rounded-lg border bg-white p-5 shadow">
-                        <p className="text-sm text-gray-500">Quick Links</p>
-                        <div className="mt-3 flex gap-2">
-                            <Link href="/medicaments" className="rounded-lg border px-3 py-2 text-sm">
+                    <div className="page-card bg-gradient-to-br from-pharmacy-light via-white to-pharmacy-lighter/70 hover:scale-[1.02]">
+                        <p className="section-kicker">Quick Actions</p>
+                        <p className="mt-3 text-lg font-semibold text-pharmacy-deepest">
+                            Pick up where you left off.
+                        </p>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                            <Link href="/medicaments" className="btn-secondary">
                                 Medicaments
                             </Link>
-                            <Link href="/cart" className="rounded-lg border px-3 py-2 text-sm">
+                            <Link href="/orders" className="btn-secondary">
+                                Orders
+                            </Link>
+                            <Link href="/cart" className="btn-primary">
                                 Cart
                             </Link>
                         </div>
                     </div>
                 </div>
 
-                <div className="rounded-lg border bg-white p-6 shadow">
-                    <div className="mb-4 flex items-center justify-between">
-                        <h2 className="text-lg font-semibold">Recent Orders</h2>
-                        <Link href="/orders" className="text-sm text-gray-600 underline">
+                <div className="table-card">
+                    <div className="flex items-center justify-between border-b border-pharmacy-light/70 px-6 py-5">
+                        <div>
+                            <p className="section-kicker">Recent Activity</p>
+                            <h2 className="mt-2 text-xl font-semibold">Latest Orders</h2>
+                        </div>
+                        <Link href="/orders" className="link-primary text-sm">
                             View all
                         </Link>
                     </div>
 
                     {recentOrders.length === 0 ? (
-                        <p className="text-sm text-gray-600">No orders yet.</p>
+                        <p className="px-6 py-5 text-sm text-slate-500">No orders yet.</p>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="min-w-full text-left text-sm">
-                                <thead className="border-b">
+                                <thead className="table-head">
                                     <tr>
-                                        <th className="px-3 py-2">Pharmacy</th>
-                                        <th className="px-3 py-2">Status</th>
-                                        <th className="px-3 py-2">Total</th>
-                                        <th className="px-3 py-2">Date</th>
+                                        <th className="px-4 py-3 font-semibold">Pharmacy</th>
+                                        <th className="px-4 py-3 font-semibold">Status</th>
+                                        <th className="px-4 py-3 font-semibold">Total</th>
+                                        <th className="px-4 py-3 font-semibold">Date</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {recentOrders.map((order) => (
-                                        <tr key={order.id} className="border-b">
-                                            <td className="px-3 py-2">{order.pharmacy_name || 'Unknown pharmacy'}</td>
-                                            <td className="px-3 py-2">{order.status}</td>
-                                            <td className="px-3 py-2">${Number(order.total_price || 0).toFixed(2)}</td>
-                                            <td className="px-3 py-2">{new Date(order.created_at).toLocaleDateString()}</td>
+                                        <tr key={order.id} className="table-row">
+                                            <td className="px-4 py-3 font-medium text-pharmacy-deepest">
+                                                {order.pharmacy_name || 'Unknown pharmacy'}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <span className={getOrderStatusBadgeClass(order.status)}>
+                                                    {formatStatusLabel(order.status)}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 font-semibold text-pharmacy-dark">
+                                                {formatCurrency(order.total_price)}
+                                            </td>
+                                            <td className="px-4 py-3 text-slate-500">
+                                                {new Date(order.created_at).toLocaleDateString()}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>

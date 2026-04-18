@@ -18,13 +18,26 @@ export default function ConfirmPasswordPage() {
         <Layout>
             <Head title="Confirm Password" />
             <div className="mx-auto max-w-md space-y-6">
-                <div className="rounded-lg border bg-white p-6 shadow"><h1 className="text-2xl font-bold">Confirm Password</h1></div>
+                <div className="hero-card">
+                    <p className="section-kicker">Security Check</p>
+                    <h1 className="mt-2 text-3xl font-semibold">Confirm Password</h1>
+                    <p className="mt-2 text-sm text-slate-600">
+                        Confirm your password before continuing with this sensitive action.
+                    </p>
+                </div>
                 <FlashMessages flash={flash} />
-                <form onSubmit={submit} className="rounded-lg border bg-white p-6 shadow">
-                    <label className="block text-sm font-medium">Password</label>
-                    <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 w-full rounded-lg border px-3 py-2 text-sm" />
+                <form onSubmit={submit} className="page-card-static">
+                    <label className="form-label">Password</label>
+                    <input
+                        type="password"
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                        className="form-input"
+                    />
                     <FormError message={errors.password} />
-                    <button type="submit" className="mt-4 w-full rounded-lg bg-gray-900 px-4 py-2 text-sm text-white" disabled={loading}>{loading ? 'Confirming...' : 'Confirm password'}</button>
+                    <button type="submit" className="btn-primary mt-4 w-full" disabled={loading}>
+                        {loading ? 'Confirming...' : 'Confirm password'}
+                    </button>
                 </form>
             </div>
         </Layout>

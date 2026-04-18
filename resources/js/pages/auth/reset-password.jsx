@@ -18,13 +18,48 @@ export default function ResetPasswordPage({ email = '', token }) {
         <Layout>
             <Head title="Reset Password" />
             <div className="mx-auto max-w-md space-y-6">
-                <div className="rounded-lg border bg-white p-6 shadow"><h1 className="text-2xl font-bold">Reset Password</h1></div>
+                <div className="hero-card">
+                    <p className="section-kicker">Account Recovery</p>
+                    <h1 className="mt-2 text-3xl font-semibold">Reset Password</h1>
+                    <p className="mt-2 text-sm text-slate-600">
+                        Choose a new password and confirm it to restore access to your account.
+                    </p>
+                </div>
                 <FlashMessages flash={flash} />
-                <form onSubmit={submit} className="rounded-lg border bg-white p-6 shadow">
-                    <div><label className="block text-sm font-medium">Email</label><input value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} className="mt-2 w-full rounded-lg border px-3 py-2 text-sm" /><FormError message={errors.email} /></div>
-                    <div className="mt-4"><label className="block text-sm font-medium">Password</label><input type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} className="mt-2 w-full rounded-lg border px-3 py-2 text-sm" /><FormError message={errors.password} /></div>
-                    <div className="mt-4"><label className="block text-sm font-medium">Confirm Password</label><input type="password" value={form.password_confirmation} onChange={(event) => setForm({ ...form, password_confirmation: event.target.value })} className="mt-2 w-full rounded-lg border px-3 py-2 text-sm" /></div>
-                    <button type="submit" className="mt-4 w-full rounded-lg bg-gray-900 px-4 py-2 text-sm text-white" disabled={loading}>{loading ? 'Saving...' : 'Reset password'}</button>
+                <form onSubmit={submit} className="page-card-static">
+                    <div>
+                        <label className="form-label">Email</label>
+                        <input
+                            value={form.email}
+                            onChange={(event) => setForm({ ...form, email: event.target.value })}
+                            className="form-input"
+                        />
+                        <FormError message={errors.email} />
+                    </div>
+                    <div className="mt-4">
+                        <label className="form-label">Password</label>
+                        <input
+                            type="password"
+                            value={form.password}
+                            onChange={(event) => setForm({ ...form, password: event.target.value })}
+                            className="form-input"
+                        />
+                        <FormError message={errors.password} />
+                    </div>
+                    <div className="mt-4">
+                        <label className="form-label">Confirm Password</label>
+                        <input
+                            type="password"
+                            value={form.password_confirmation}
+                            onChange={(event) =>
+                                setForm({ ...form, password_confirmation: event.target.value })
+                            }
+                            className="form-input"
+                        />
+                    </div>
+                    <button type="submit" className="btn-primary mt-4 w-full" disabled={loading}>
+                        {loading ? 'Saving...' : 'Reset password'}
+                    </button>
                 </form>
             </div>
         </Layout>

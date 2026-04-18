@@ -99,6 +99,7 @@ class DashboardController extends Controller
                 'totalMedicaments' => count($formattedMedicaments),
                 'lowStockCount' => $lowStockCount,
                 'totalOrders' => $pharmacy->orders()->count(),
+                'totalRevenue' => (float) $pharmacy->orders()->where('status', 'delivered')->sum('total_price'),
             ],
         ]);
     }

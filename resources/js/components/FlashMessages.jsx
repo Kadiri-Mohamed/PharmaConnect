@@ -22,7 +22,7 @@ export default function FlashMessages({ flash = {}, status }) {
             {messages.map((message, index) => (
                 <div
                     key={`${message.type}-${index}`}
-                    className={`rounded-lg border px-4 py-3 text-sm ${
+                    className={`rounded-2xl border px-4 py-3 text-sm shadow-pharmacy ${
                         message.type === 'error'
                             ? 'border-red-200 bg-red-50 text-red-700'
                             : 'border-green-200 bg-green-50 text-green-700'

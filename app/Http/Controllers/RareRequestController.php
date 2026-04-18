@@ -34,9 +34,7 @@ class RareRequestController extends Controller
     {
         RareRequest::create([
             'medicine_name' => $request->string('medicine_name')->toString(),
-            'description' => $request->filled('description')
-                ? $request->string('description')->toString()
-                : null,
+            'description' => $request->filled('description')?$request->string('description')->toString():null,
             'status' => 'pending',
             'found_by_pharmacy_id' => null,
         ]);

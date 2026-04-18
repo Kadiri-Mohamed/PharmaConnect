@@ -1,7 +1,133 @@
+@config '../../tailwind.config.js';
 @import 'tailwindcss';
 
+:root {
+    --pharmacy-glow: rgba(179, 215, 224, 0.45);
+}
+
 @layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
     body {
-        @apply bg-gray-100 text-gray-900 antialiased;
+        @apply bg-slate-50 text-slate-700 antialiased;
+        font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+        background-image:
+            radial-gradient(circle at top right, var(--pharmacy-glow), transparent 28%),
+            linear-gradient(180deg, rgba(179, 215, 224, 0.16) 0%, rgba(248, 250, 252, 1) 280px);
+    }
+
+    ::selection {
+        @apply bg-pharmacy-medium text-white;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply text-pharmacy-deepest;
+    }
+
+    a {
+        @apply transition-colors duration-200;
+    }
+}
+
+@layer components {
+    .hero-card {
+        @apply rounded-2xl border border-pharmacy-light/80 bg-white p-6 shadow-pharmacy md:p-8;
+        background-image: linear-gradient(
+            135deg,
+            rgba(179, 215, 224, 0.22) 0%,
+            rgba(255, 255, 255, 0.98) 52%,
+            rgba(127, 179, 193, 0.16) 100%
+        );
+    }
+
+    .page-card {
+        @apply rounded-2xl border border-pharmacy-light/80 bg-white p-6 shadow-pharmacy transition duration-200 hover:-translate-y-1 hover:border-pharmacy-medium/75 hover:shadow-pharmacy-lg;
+    }
+
+    .page-card-static {
+        @apply rounded-2xl border border-pharmacy-light/80 bg-white p-6 shadow-pharmacy;
+    }
+
+    .tinted-card {
+        @apply rounded-2xl border border-pharmacy-light/80 bg-pharmacy-light/10 p-6 shadow-pharmacy;
+    }
+
+    .table-card {
+        @apply overflow-hidden rounded-2xl border border-pharmacy-light/80 bg-white shadow-pharmacy;
+    }
+
+    .table-head {
+        @apply bg-pharmacy-light/60 text-pharmacy-deepest;
+    }
+
+    .table-row {
+        @apply border-t border-pharmacy-light/80 transition hover:bg-pharmacy-light/10;
+    }
+
+    .section-kicker {
+        @apply text-xs font-semibold uppercase tracking-[0.24em] text-pharmacy-dark/80;
+    }
+
+    .muted-copy {
+        @apply text-sm text-slate-500;
+    }
+
+    .link-primary {
+        @apply font-medium text-pharmacy-medium hover:text-pharmacy-dark;
+    }
+
+    .btn-primary {
+        @apply inline-flex items-center justify-center rounded-xl bg-pharmacy-dark px-4 py-2.5 text-sm font-semibold text-white shadow-pharmacy transition duration-200 hover:-translate-y-0.5 hover:bg-pharmacy-deepest disabled:cursor-not-allowed disabled:opacity-60;
+    }
+
+    .btn-secondary {
+        @apply inline-flex items-center justify-center rounded-xl border border-pharmacy-medium bg-white px-4 py-2.5 text-sm font-semibold text-pharmacy-dark transition duration-200 hover:-translate-y-0.5 hover:border-pharmacy-dark hover:bg-pharmacy-light/20 disabled:cursor-not-allowed disabled:opacity-60;
+    }
+
+    .btn-danger {
+        @apply inline-flex items-center justify-center rounded-xl border border-red-300 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition duration-200 hover:-translate-y-0.5 hover:border-red-500 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60;
+    }
+
+    .btn-success {
+        @apply inline-flex items-center justify-center rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white transition duration-200 hover:-translate-y-0.5 hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60;
+    }
+
+    .form-label {
+        @apply text-sm font-semibold text-pharmacy-deepest;
+    }
+
+    .form-input {
+        @apply mt-2 w-full rounded-xl border border-pharmacy-lighter/80 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-pharmacy-medium focus:ring-4 focus:ring-pharmacy-medium/15;
+    }
+
+    .form-select {
+        @apply mt-2 w-full rounded-xl border border-pharmacy-lighter/80 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-pharmacy-medium focus:ring-4 focus:ring-pharmacy-medium/15;
+    }
+
+    .form-file {
+        @apply mt-2 w-full rounded-xl border border-pharmacy-lighter/80 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-pharmacy-medium focus:ring-4 focus:ring-pharmacy-medium/15;
+    }
+
+    .form-checkbox {
+        @apply h-4 w-4 rounded border-pharmacy-lighter text-pharmacy-dark focus:ring-pharmacy-medium/20;
+    }
+
+    .status-badge {
+        @apply inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold;
+    }
+
+    .metric-value {
+        @apply text-3xl font-bold text-pharmacy-dark;
+    }
+
+    .price-highlight {
+        @apply font-bold text-pharmacy-dark;
     }
 }

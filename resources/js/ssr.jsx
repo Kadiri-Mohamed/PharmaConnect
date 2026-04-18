@@ -4,17 +4,23 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import ReactDOMServer from 'react-dom/server';
 
 const pages = import.meta.glob('./Pages/**/*.jsx', { eager: true });
-const resolvePagePaths = (name) => {
-    const normalizedName = name.replace(/^pharmacien\//, 'Pharmacien/');
+const pagePathsByLowercase = Object.fromEntries(
+    Object.keys(pages).map((path) => [path.toLowerCase(), path]),
+);
+const resolvePage = (name) => {
+    const requestedPath = `./Pages/${name}.jsx`;
 
-    return [...new Set([`./Pages/${name}.jsx`, `./Pages/${normalizedName}.jsx`])];
+    return resolvePageComponent(
+        pagePathsByLowercase[requestedPath.toLowerCase()] ?? requestedPath,
+        pages,
+    );
 };
 
 createServer((page) =>
     createInertiaApp({
         page,
         render: ReactDOMServer.renderToString,
-        resolve: (name) => resolvePageComponent(resolvePagePaths(name), pages),
+        resolve: resolvePage,
         setup: ({ App, props }) => <App {...props} />,
     }),
 );
