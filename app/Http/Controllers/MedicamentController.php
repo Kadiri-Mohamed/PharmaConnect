@@ -59,10 +59,10 @@ class MedicamentController extends Controller
             }
 
             $data = [
-                'name' => (string) $request['name'],
+                'name' => $request['name'],
                 'description' => $description,
-                'price' => (float) $request['price'],
-                'stock' => (int) $request['stock'],
+                'price' => $request['price'],
+                'stock' => $request['stock'],
                 'requires_prescription' => $requiresPrescription,
                 'pharmacy_id' => $pharmacy->id,
             ];
@@ -97,10 +97,10 @@ class MedicamentController extends Controller
             }
 
             $data = [
-                'name' => (string) $request['name'],
+                'name' => $request['name'],
                 'description' => $description,
-                'price' => (float) $request['price'],
-                'stock' => (int) $request['stock'],
+                'price' => $request['price'],
+                'stock' => $request['stock'],
                 'requires_prescription' => $requiresPrescription,
             ];
 
@@ -133,7 +133,7 @@ class MedicamentController extends Controller
             'description' => $medicament->description,
             'price' => $medicament->price,
             'stock' => $medicament->stock,
-            'requires_prescription' => (bool) $medicament->requires_prescription,
+            'requires_prescription' => $medicament->requires_prescription,
             'pharmacy' => [
                 'id' => $medicament->pharmacy->id,
                 'name' => $medicament->pharmacy->name,

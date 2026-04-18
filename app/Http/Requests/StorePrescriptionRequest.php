@@ -8,7 +8,7 @@ class StorePrescriptionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return (bool) $this->user() && $this->user()->role === 'client';
+        return $this->user() && $this->user()->role === 'client';
     }
 
     public function rules(): array

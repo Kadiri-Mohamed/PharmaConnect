@@ -31,8 +31,8 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        $user->name = (string) $request['name'];
-        $user->email = (string) $request['email'];
+        $user->name = $request['name'];
+        $user->email = $request['email'];
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;

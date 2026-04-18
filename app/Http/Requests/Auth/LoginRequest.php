@@ -42,8 +42,8 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
 
         $data = [
-            'email' => (string) $this['email'],
-            'password' => (string) $this['password'],
+            'email' => $this['email'],
+            'password' => $this['password'],
         ];
         $remember = ! empty($this['remember']);
 
@@ -86,7 +86,7 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        $email = (string) $this['email'];
+        $email = $this['email'];
 
         return Str::transliterate(Str::lower($email).'|'.$this->ip());
     }

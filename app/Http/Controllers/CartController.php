@@ -31,8 +31,8 @@ class CartController extends Controller
             $user = $request->user();
             $cart = $user->cart()->firstOrCreate([]);
             
-            $medicamentId = (int) $request['medicament_id'];
-            $quantity = (int) $request['quantity'];
+            $medicamentId = $request['medicament_id'];
+            $quantity = $request['quantity'];
 
             $this->cartService->addItem($cart, $medicamentId, $quantity);
             
@@ -51,7 +51,7 @@ class CartController extends Controller
         }
 
         try {
-            $quantity = (int) $request['quantity'];
+            $quantity = $request['quantity'];
             $this->cartService->updateQuantity($cartItem, $quantity);
             
             return back()->with('success', 'Cart updated.');
@@ -119,7 +119,7 @@ class CartController extends Controller
                 $price = $medicament->price;
                 $medicamentName = $medicament->name;
                 $itemPharmacyId = $medicament->pharmacy_id;
-                $requiresPrescription = (bool) $medicament->requires_prescription;
+                $requiresPrescription = $medicament->requires_prescription;
             }
             
             $subtotal = $price * $item->quantity;

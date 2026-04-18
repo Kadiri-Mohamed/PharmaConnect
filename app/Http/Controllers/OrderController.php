@@ -39,7 +39,7 @@ class OrderController extends Controller
             'pharmacy_id' => ['required', 'exists:pharmacies,id'],
         ]);
 
-        $pharmacyId = (int) $request['pharmacy_id'];
+        $pharmacyId = $request['pharmacy_id'];
         
         try {
             $order = $this->orderService->createOrderFromCart(
@@ -109,7 +109,7 @@ class OrderController extends Controller
             'status' => ['required', 'in:pending,preparing,ready,delivered,cancelled'],
         ]);
 
-        $status = (string) $request['status'];
+        $status = $request['status'];
         
         try {
             $this->orderService->updateOrderStatus($order, $status);

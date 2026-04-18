@@ -91,7 +91,7 @@ class DashboardController extends Controller
                 'name' => $pharmacy->name,
                 'address' => $pharmacy->address,
                 'phone' => $pharmacy->phone,
-                'status_garde' => (bool) $pharmacy->status_garde,
+                'status_garde' => $pharmacy->status_garde,
             ],
             'medicaments' => $formattedMedicaments,
             'recentOrders' => $formattedOrders,
@@ -99,7 +99,7 @@ class DashboardController extends Controller
                 'totalMedicaments' => count($formattedMedicaments),
                 'lowStockCount' => $lowStockCount,
                 'totalOrders' => $pharmacy->orders()->count(),
-                'totalRevenue' => (float) $pharmacy->orders()->where('status', 'delivered')->sum('total_price'),
+                'totalRevenue' => $pharmacy->orders()->where('status', 'delivered')->sum('total_price'),
             ],
         ]);
     }

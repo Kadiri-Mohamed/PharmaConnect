@@ -8,7 +8,7 @@ class StoreMedicamentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return (bool) $this->user() && $this->user()->role === 'pharmacien';
+        return $this->user() && $this->user()->role === 'pharmacien';
     }
 
     public function rules(): array

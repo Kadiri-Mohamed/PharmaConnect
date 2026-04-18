@@ -8,7 +8,7 @@ class UpdateOrderStatusRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return (bool) $this->user();
+        return $this->user() !== null;
     }
 
     public function rules(): array

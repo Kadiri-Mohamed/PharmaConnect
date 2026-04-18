@@ -28,9 +28,9 @@ class PharmacyController extends Controller
 
         $data = [
             'user_id' => auth()->id(),
-            'name' => (string) $request['name'],
-            'address' => (string) $request['address'],
-            'phone' => (string) $request['phone'],
+            'name' => $request['name'],
+            'address' => $request['address'],
+            'phone' => $request['phone'],
         ];
 
         Pharmacy::create($data);
@@ -66,9 +66,9 @@ class PharmacyController extends Controller
         }
 
         $data = [
-            'name' => (string) $request['name'],
-            'address' => (string) $request['address'],
-            'phone' => (string) $request['phone'],
+            'name' => $request['name'],
+            'address' => $request['address'],
+            'phone' => $request['phone'],
             'status_garde' => $request['status_garde'],
         ];
 

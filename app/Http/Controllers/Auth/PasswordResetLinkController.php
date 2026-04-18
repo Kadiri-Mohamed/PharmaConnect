@@ -33,7 +33,7 @@ class PasswordResetLinkController extends Controller
         ]);
 
         $data = [
-            'email' => (string) $request['email'],
+            'email' => $request['email'],
         ];
 
         Password::sendResetLink($data);

@@ -50,7 +50,7 @@ class RareRequestController extends Controller
     
     public function updateStatus(UpdateRareRequestStatusRequest $request, RareRequest $rareRequest)
     {
-        $status = (string) $request['status'];
+        $status = $request['status'];
         $pharmacy = $request->user()->pharmacy;
         
         if ($status === 'found' && !$pharmacy) {

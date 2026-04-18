@@ -35,7 +35,7 @@ class PasswordController extends Controller
         ]);
 
         $request->user()->update([
-            'password' => Hash::make((string) $request['password']),
+            'password' => Hash::make($request['password']),
         ]);
 
         return back();
