@@ -6,7 +6,7 @@ use App\Http\Requests\AddToCartRequest;
 use App\Http\Requests\UpdateCartItemRequest;
 use App\Models\CartItem;
 use App\Services\CartService;
-use DomainException;
+use Exception;
 use Inertia\Inertia;
 
 class CartController extends Controller
@@ -31,13 +31,13 @@ class CartController extends Controller
             $user = $request->user();
             $cart = $user->cart()->firstOrCreate([]);
             
-            $medicamentId = $request->integer('medicament_id');
-            $quantity = $request->integer('quantity');
+            $medicamentId = (int) $request['medicament_id'];
+            $quantity = (int) $request['quantity'];
 
             $this->cartService->addItem($cart, $medicamentId, $quantity);
             
             return back()->with('success', 'Item added to cart.');
-        } catch (DomainException $e) {
+        } catch (Exception $e) {
             return back()->with('error', $e->getMessage());
         }
     }
@@ -51,11 +51,11 @@ class CartController extends Controller
         }
 
         try {
-            $quantity = $request->integer('quantity');
+            $quantity = (int) $request['quantity'];
             $this->cartService->updateQuantity($cartItem, $quantity);
             
             return back()->with('success', 'Cart updated.');
-        } catch (DomainException $e) {
+        } catch (Exception $e) {
             return back()->with('error', $e->getMessage());
         }
     }

@@ -5,21 +5,21 @@ namespace App\Services;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Medicament;
-use DomainException;
+use Exception;
 
 class CartService
 {
     public function addItem(Cart $cart, int $medicamentId, int $quantity): CartItem
     {
         if ($quantity <= 0) {
-            throw new DomainException('Quantity must be greater than 0');
+            throw new Exception('Quantity must be greater than 0');
         }
 
         $medicament = Medicament::findOrFail($medicamentId);
         $firstItem = $cart->items()->with('medicament')->first();
 
         if ($firstItem && $firstItem->medicament->pharmacy_id !== $medicament->pharmacy_id) {
-            throw new DomainException('Your cart already contains items from another pharmacy.');
+            throw new Exception('Your cart already contains items from another pharmacy.');
         }
 
         $existingItem = $cart->items()->where('medicament_id', $medicamentId)->first();
@@ -43,7 +43,7 @@ class CartService
     public function updateQuantity(CartItem $cartItem, int $quantity): CartItem
     {
         if ($quantity <= 0) {
-            throw new DomainException('Quantity must be greater than 0');
+            throw new Exception('Quantity must be greater than 0');
         }
 
         $cartItem->update(['quantity' => $quantity]);

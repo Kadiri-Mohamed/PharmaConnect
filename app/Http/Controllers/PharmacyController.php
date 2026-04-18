@@ -26,10 +26,14 @@ class PharmacyController extends Controller
             return redirect()->route('pharmacien.my-pharmacy')->with('error', 'Pharmacy already exists.');
         }
 
-        Pharmacy::create([
+        $data = [
             'user_id' => auth()->id(),
-            ...$request->validated(),
-        ]);
+            'name' => (string) $request['name'],
+            'address' => (string) $request['address'],
+            'phone' => (string) $request['phone'],
+        ];
+
+        Pharmacy::create($data);
 
         return redirect()->route('pharmacien.dashboard')->with('success', 'Pharmacy created successfully.');
     }
@@ -61,7 +65,14 @@ class PharmacyController extends Controller
             abort(403);
         }
 
-        $pharmacy->update($request->validated());
+        $data = [
+            'name' => (string) $request['name'],
+            'address' => (string) $request['address'],
+            'phone' => (string) $request['phone'],
+            'status_garde' => $request['status_garde'],
+        ];
+
+        $pharmacy->update($data);
 
         return back()->with('success', 'Pharmacy profile updated.');
     }

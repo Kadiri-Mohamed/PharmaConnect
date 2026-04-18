@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Medicament;
-use DomainException;
+use Exception;
 use Illuminate\Support\Facades\DB;
 
 class InventoryManager
@@ -11,18 +11,18 @@ class InventoryManager
     public function decreaseStock(Medicament $medicament, int $quantity): Medicament
     {
         if ($quantity <= 0) {
-            throw new DomainException('Quantity must be greater than 0');
+            throw new Exception('Quantity must be greater than 0');
         }
 
         return DB::transaction(function () use ($medicament, $quantity) {
             $lockedMedicament = Medicament::lockForUpdate()->find($medicament->id);
 
             if (!$lockedMedicament) {
-                throw new DomainException('Medicament not found');
+                throw new Exception('Medicament not found');
             }
 
             if ($lockedMedicament->stock < $quantity) {
-                throw new DomainException("Insufficient stock for {$lockedMedicament->name}");
+                throw new Exception("Insufficient stock for {$lockedMedicament->name}");
             }
 
             $lockedMedicament->decrement('stock', $quantity);
@@ -33,7 +33,7 @@ class InventoryManager
     public function increaseStock(Medicament $medicament, int $quantity): Medicament
     {
         if ($quantity <= 0) {
-            throw new DomainException('Quantity must be greater than 0');
+            throw new Exception('Quantity must be greater than 0');
         }
 
         return DB::transaction(function () use ($medicament, $quantity) {

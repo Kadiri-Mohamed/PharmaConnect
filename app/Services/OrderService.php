@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\User;
-use DomainException;
+use Exception;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
@@ -20,24 +20,24 @@ class OrderService
             $cart = $user->cart;
             
             if (!$cart) {
-                throw new DomainException('Cart not found');
+                throw new Exception('Cart not found');
             }
             
             $cartItems = $cart->items()->with('medicament')->get();
             
             if ($cartItems->isEmpty()) {
-                throw new DomainException('Cart is empty');
+                throw new Exception('Cart is empty');
             }
             
             foreach ($cartItems as $item) {
                 if ($item->medicament->pharmacy_id !== $pharmacyId) {
-                    throw new DomainException('All items must be from the same pharmacy');
+                    throw new Exception('All items must be from the same pharmacy');
                 }
             }
             
             foreach ($cartItems as $item) {
                 if ($item->medicament->stock < $item->quantity) {
-                    throw new DomainException("Insufficient stock for {$item->medicament->name}");
+                    throw new Exception("Insufficient stock for {$item->medicament->name}");
                 }
             }
             
@@ -53,7 +53,7 @@ class OrderService
                 $hasValidPrescription = $user->prescriptions()->whereIn('status', ['pending', 'validated'])->doesntHave('orders')->exists();
                     
                 if (!$hasValidPrescription) {
-                    throw new DomainException('Prescription required for some items');
+                    throw new Exception('Prescription required for some items');
                 }
             }
             
@@ -89,7 +89,7 @@ class OrderService
     {
         return DB::transaction(function () use ($order) {
             if ($order->status === 'delivered') {
-                throw new DomainException('Cannot cancel delivered order');
+                throw new Exception('Cannot cancel delivered order');
             }
             
             $items = $order->items;
@@ -115,7 +115,7 @@ class OrderService
         }
         
         if (!$isValid) {
-            throw new DomainException("Invalid status: {$status}");
+            throw new Exception("Invalid status: {$status}");
         }
         
         $order->update(['status' => $status]);

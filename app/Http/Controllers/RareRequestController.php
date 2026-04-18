@@ -32,9 +32,15 @@ class RareRequestController extends Controller
     
     public function store(StoreRareRequestRequest $request)
     {
+        $description = $request['description'];
+
+        if ($description === '') {
+            $description = null;
+        }
+
         RareRequest::create([
-            'medicine_name' => $request->string('medicine_name')->toString(),
-            'description' => $request->filled('description')?$request->string('description')->toString():null,
+            'medicine_name' => $request['medicine_name'],
+            'description' => $description,
             'status' => 'pending',
             'found_by_pharmacy_id' => null,
         ]);
@@ -44,7 +50,7 @@ class RareRequestController extends Controller
     
     public function updateStatus(UpdateRareRequestStatusRequest $request, RareRequest $rareRequest)
     {
-        $status = $request->string('status')->toString();
+        $status = (string) $request['status'];
         $pharmacy = $request->user()->pharmacy;
         
         if ($status === 'found' && !$pharmacy) {
@@ -66,7 +72,7 @@ class RareRequestController extends Controller
     
     private function formatRequest(RareRequest $rareRequest): array
     {
-        $rareRequest->loadMissing('foundByPharmacy.user');
+        $rareRequest->load('foundByPharmacy.user');
         
         $pharmacy = $rareRequest->foundByPharmacy;
         

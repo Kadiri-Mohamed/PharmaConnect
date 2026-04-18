@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreMedicamentRequest;
 use App\Http\Requests\UpdateMedicamentRequest;
 use App\Models\Medicament;
-use DomainException;
+use Exception;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -47,14 +47,30 @@ class MedicamentController extends Controller
         try {
             $user = $request->user();
             $pharmacy = $user->pharmacy;
+            $description = $request['description'];
+            $requiresPrescription = $request['requires_prescription'];
 
-            $data = $request->validated();
-            $data['pharmacy_id'] = $pharmacy->id;
+            if ($description === '') {
+                $description = null;
+            }
+
+            if ($requiresPrescription === null) {
+                $requiresPrescription = false;
+            }
+
+            $data = [
+                'name' => (string) $request['name'],
+                'description' => $description,
+                'price' => (float) $request['price'],
+                'stock' => (int) $request['stock'],
+                'requires_prescription' => $requiresPrescription,
+                'pharmacy_id' => $pharmacy->id,
+            ];
 
             Medicament::create($data);
 
             return back()->with('success', 'Medicament created.');
-        } catch (DomainException $e) {
+        } catch (Exception $e) {
             return back()->with('error', $e->getMessage());
         }
     }
@@ -69,9 +85,28 @@ class MedicamentController extends Controller
         }
 
         try {
-            $medicament->update($request->validated());
+            $description = $request['description'];
+            $requiresPrescription = $request['requires_prescription'];
+
+            if ($description === '') {
+                $description = null;
+            }
+
+            if ($requiresPrescription === null) {
+                $requiresPrescription = false;
+            }
+
+            $data = [
+                'name' => (string) $request['name'],
+                'description' => $description,
+                'price' => (float) $request['price'],
+                'stock' => (int) $request['stock'],
+                'requires_prescription' => $requiresPrescription,
+            ];
+
+            $medicament->update($data);
             return back()->with('success', 'Medicament updated.');
-        } catch (DomainException $e) {
+        } catch (Exception $e) {
             return back()->with('error', $e->getMessage());
         }
     }

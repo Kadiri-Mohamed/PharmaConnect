@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Services\OrderService;
-use DomainException;
+use Exception;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -38,13 +38,15 @@ class OrderController extends Controller
         $request->validate([
             'pharmacy_id' => ['required', 'exists:pharmacies,id'],
         ]);
+
+        $pharmacyId = (int) $request['pharmacy_id'];
         
         try {
             $order = $this->orderService->createOrderFromCart(
                 $request->user(),
-                $request->integer('pharmacy_id')
+                $pharmacyId
             );
-        } catch (DomainException $e) {
+        } catch (Exception $e) {
             return back()->with('error', $e->getMessage());
         }
         
@@ -106,10 +108,12 @@ class OrderController extends Controller
         $request->validate([
             'status' => ['required', 'in:pending,preparing,ready,delivered,cancelled'],
         ]);
+
+        $status = (string) $request['status'];
         
         try {
-            $this->orderService->updateOrderStatus($order, $request->status);
-        } catch (DomainException $e) {
+            $this->orderService->updateOrderStatus($order, $status);
+        } catch (Exception $e) {
             return back()->with('error', $e->getMessage());
         }
         
