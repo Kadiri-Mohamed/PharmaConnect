@@ -2,103 +2,73 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePrescriptionRequest;
 use App\Models\Prescription;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class PrescriptionController extends Controller
 {
-    /**
-     * List prescriptions for the authenticated client.
-     */
-    public function index(): JsonResponse
+    public function index()
     {
-        $user = auth()->user();
-        if (! $user || $user->role !== 'client') {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], Response::HTTP_FORBIDDEN);
-        }
-
-        $prescriptions = $user->prescriptions()
-            ->latest()
-            ->get()
-            ->map(fn (Prescription $prescription) => [
+        $prescriptions = auth()->user()->prescriptions()->latest()->get();
+        
+        $formattedPrescriptions = [];
+        foreach ($prescriptions as $prescription) {
+            $formattedPrescriptions[] = [
                 'id' => $prescription->id,
                 'image' => $prescription->image,
                 'status' => $prescription->status,
                 'created_at' => $prescription->created_at,
-            ]);
-
-        return response()->json([
-            'message' => 'Prescriptions retrieved successfully',
-            'data' => $prescriptions,
-        ], Response::HTTP_OK);
-    }
-
-    /**
-     * Upload a new prescription for the authenticated client.
-     */
-    public function store(Request $request): JsonResponse
-    {
-        $user = auth()->user();
-        if (! $user || $user->role !== 'client') {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], Response::HTTP_FORBIDDEN);
+                'file_url' => route('prescriptions.file', $prescription),
+            ];
         }
-
-        $validated = $request->validate([
-            'image' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+        
+        return Inertia::render('prescriptions', [
+            'prescriptions' => $formattedPrescriptions,
         ]);
-
-        $path = $validated['image']->store('prescriptions', 'public');
-
-        $prescription = Prescription::create([
-            'user_id' => $user->id,
+    }
+    
+    public function store(StorePrescriptionRequest $request)
+    {
+        $path = $request->file('image')->store('prescriptions', 'public');
+        
+        Prescription::create([
+            'user_id' => $request->user()->id,
             'image' => $path,
             'status' => 'pending',
         ]);
-
-        return response()->json([
-            'message' => 'Prescription uploaded successfully. You can now place your order and the pharmacy will review it.',
-            'data' => [
-                'id' => $prescription->id,
-                'image' => $prescription->image,
-                'status' => $prescription->status,
-                'created_at' => $prescription->created_at,
-            ],
-        ], Response::HTTP_CREATED);
+        
+        return back()->with('success', 'Prescription uploaded successfully.');
     }
-
-    /**
-     * Stream a prescription file for authorized users.
-     */
+    
     public function file(Prescription $prescription)
     {
         $user = auth()->user();
-        if (! $user) {
-            abort(Response::HTTP_FORBIDDEN);
+        
+        if (!$user) {
+            abort(403);
         }
-
+        
         $canAccess = false;
-
+        
         if ($user->role === 'client' && $prescription->user_id === $user->id) {
             $canAccess = true;
         }
-
+        
         if ($user->role === 'pharmacien' && $user->pharmacy) {
-            $canAccess = $user->pharmacy->orders()
-                ->where('prescription_id', $prescription->id)
-                ->exists();
+            $hasOrder = $user->pharmacy->orders()->where('prescription_id', $prescription->id)->exists();
+            
+            if ($hasOrder) {
+                $canAccess = true;
+            }
         }
-
-        if (! $canAccess) {
-            abort(Response::HTTP_FORBIDDEN);
+        
+        if (!$canAccess) {
+            abort(403);
         }
-
+        
         return Storage::disk('public')->response($prescription->image);
     }
 }

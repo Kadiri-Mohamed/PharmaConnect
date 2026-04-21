@@ -2,175 +2,147 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePharmacyRequest;
+use App\Http\Requests\UpdatePharmacyRequest;
+use App\Models\Medicament;
 use App\Models\Pharmacy;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response as HttpResponse;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class PharmacyController extends Controller
 {
-    /**
-     * Show the pharmacy creation page for pharmacists.
-     */
-    public function create(): Response|RedirectResponse
+    public function create()
     {
-        if (auth()->user()?->pharmacy) {
-            return redirect()->route('dashboard');
+        if (auth()->user()->pharmacy) {
+            return redirect()->route('pharmacien.my-pharmacy');
         }
 
-        return Inertia::render('pharmacien/create-pharmacy');
+        return Inertia::render('create-pharmacy');
     }
 
-    /**
-     * Store a newly created pharmacy for the authenticated pharmacist.
-     */
-    public function store(Request $request): RedirectResponse
+    public function store(StorePharmacyRequest $request): RedirectResponse
     {
-        if (auth()->user()?->pharmacy) {
-            return redirect()->route('dashboard')->with('error', 'Pharmacy already exists.');
+        if (auth()->user()->pharmacy) {
+            return redirect()->route('pharmacien.my-pharmacy')->with('error', 'Pharmacy already exists.');
         }
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'address' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-        ]);
-
-        Pharmacy::create([
+        $data = [
             'user_id' => auth()->id(),
-            'name' => $validated['name'],
-            'address' => $validated['address'],
-            'phone' => $validated['phone'],
+            'name' => $request['name'],
+            'address' => $request['address'],
+            'phone' => $request['phone'],
+        ];
+
+        Pharmacy::create($data);
+
+        return redirect()->route('pharmacien.dashboard')->with('success', 'Pharmacy created successfully.');
+    }
+
+    public function myPharmacy()
+    {
+        $pharmacy = auth()->user()->pharmacy;
+
+        if (!$pharmacy) {
+            abort(403);
+        }
+
+        return Inertia::render('my-pharmacy', [
+            'pharmacy' => [
+                'id' => $pharmacy->id,
+                'name' => $pharmacy->name,
+                'address' => $pharmacy->address,
+                'phone' => $pharmacy->phone,
+                'status_garde' =>  $pharmacy->status_garde,
+            ],
         ]);
-
-        return redirect()->route('dashboard');
     }
 
-    /**
-     * Display the authenticated pharmacist pharmacy.
-     */
-    public function myPharmacy(): JsonResponse
+    public function updateMyPharmacy(UpdatePharmacyRequest $request)
     {
-        $user = auth()->user();
+        $pharmacy = $request->user()->pharmacy;
 
-        if (! $user || $user->role !== 'pharmacien') {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], HttpResponse::HTTP_FORBIDDEN);
+        if (!$pharmacy) {
+            abort(403);
         }
 
-        if (! $user->pharmacy) {
-            return response()->json([
-                'message' => 'No pharmacy found for this pharmacist.',
-            ], HttpResponse::HTTP_NOT_FOUND);
-        }
+        $data = [
+            'name' => $request['name'],
+            'address' => $request['address'],
+            'phone' => $request['phone'],
+            'status_garde' => $request['status_garde'],
+        ];
 
-        return response()->json([
-            'message' => 'Pharmacy retrieved successfully',
-            'data' => $user->pharmacy,
-        ], HttpResponse::HTTP_OK);
+        $pharmacy->update($data);
+
+        return back()->with('success', 'Pharmacy profile updated.');
     }
 
-    /**
-     * Update the authenticated pharmacist pharmacy.
-     */
-    public function updateMyPharmacy(Request $request): JsonResponse
+    public function index()
     {
-        $user = auth()->user();
-
-        if (! $user || $user->role !== 'pharmacien') {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], HttpResponse::HTTP_FORBIDDEN);
+        $pharmacies = Pharmacy::withCount('medicaments')->latest()->get();
+        
+        $formattedPharmacies = [];
+        foreach ($pharmacies as $pharmacy) {
+            $availableCount = $pharmacy->medicaments()->where('stock', '>', 0)->count();
+            
+            $formattedPharmacies[] = [
+                'id' => $pharmacy->id,
+                'name' => $pharmacy->name,
+                'address' => $pharmacy->address,
+                'phone' => $pharmacy->phone,
+                'status_garde' =>  $pharmacy->status_garde,
+                'medicament_count' => $pharmacy->medicaments_count,
+                'available_medicaments' => $availableCount,
+            ];
         }
 
-        if (! $user->pharmacy) {
-            return response()->json([
-                'message' => 'No pharmacy found for this pharmacist.',
-            ], HttpResponse::HTTP_NOT_FOUND);
-        }
-
-        $validated = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'address' => 'sometimes|required|string|max:255',
-            'phone' => 'sometimes|required|string|max:20',
-            'status_garde' => 'sometimes|boolean',
+        return Inertia::render('pharmacies', [
+            'pharmacies' => $formattedPharmacies,
         ]);
-
-        $user->pharmacy->update($validated);
-
-        return response()->json([
-            'message' => 'Pharmacy updated successfully',
-            'data' => $user->pharmacy->fresh(),
-        ], HttpResponse::HTTP_OK);
     }
 
-    /**
-     * Display a listing of all pharmacies.
-     *
-     * @return JsonResponse
-     */
-    public function index(): JsonResponse
+    public function show(Pharmacy $pharmacy)
     {
-        try {
-            $pharmacies = Pharmacy::with('user')
-                ->paginate(15);
-
-            return response()->json([
-                'message' => 'Pharmacies retrieved successfully',
-                'data' => $pharmacies->items(),
-                'pagination' => [
-                    'current_page' => $pharmacies->currentPage(),
-                    'total' => $pharmacies->total(),
-                    'per_page' => $pharmacies->perPage(),
-                    'last_page' => $pharmacies->lastPage(),
-                ],
-            ], HttpResponse::HTTP_OK);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred while retrieving pharmacies',
-            ], HttpResponse::HTTP_INTERNAL_SERVER_ERROR);
+        $pharmacy->load('user');
+        
+        $medicaments = $pharmacy->medicaments()->latest()->get();
+        
+        $formattedMedicaments = [];
+        foreach ($medicaments as $medicament) {
+            $formattedMedicaments[] = [
+                'id' => $medicament->id,
+                'name' => $medicament->name,
+                'description' => $medicament->description,
+                'price' => $medicament->price,
+                'stock' => $medicament->stock,
+                'requires_prescription' => $medicament->requires_prescription,
+            ];
         }
-    }
-
-    /**
-     * Display the specified pharmacy.
-     *
-     * @param Pharmacy $pharmacy
-     * @return JsonResponse
-     */
-    public function show(Pharmacy $pharmacy): JsonResponse
-    {
-        try {
-            $pharmacy->load(['user', 'medicaments']);
-
-            return response()->json([
-                'message' => 'Pharmacy retrieved successfully',
-                'data' => [
-                    'id' => $pharmacy->id,
-                    'name' => $pharmacy->name,
-                    'address' => $pharmacy->address,
-                    'phone' => $pharmacy->phone,
-                    'status_garde' => $pharmacy->status_garde,
-                    'pharmacist' => [
-                        'id' => $pharmacy->user->id,
-                        'name' => $pharmacy->user->name,
-                        'email' => $pharmacy->user->email,
-                    ],
-                    'medicament_count' => $pharmacy->medicaments()->count(),
-                    'available_medicaments' => $pharmacy->medicaments()
-                        ->where('stock', '>', 0)
-                        ->count(),
-                    'created_at' => $pharmacy->created_at,
-                ],
-            ], HttpResponse::HTTP_OK);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred while retrieving pharmacy',
-            ], HttpResponse::HTTP_INTERNAL_SERVER_ERROR);
+        
+        $availableMedicaments = 0;
+        foreach ($medicaments as $medicament) {
+            if ($medicament->stock > 0) {
+                $availableMedicaments++;
+            }
         }
+
+        return Inertia::render('pharmacy-details', [
+            'pharmacy' => [
+                'id' => $pharmacy->id,
+                'name' => $pharmacy->name,
+                'address' => $pharmacy->address,
+                'phone' => $pharmacy->phone,
+                'status_garde' =>  $pharmacy->status_garde,
+                'pharmacist' => $pharmacy->user ? [
+                    'id' => $pharmacy->user->id,
+                    'name' => $pharmacy->user->name,
+                    'email' => $pharmacy->user->email,
+                ] : null,
+                'medicament_count' => $medicaments->count(),
+                'available_medicaments' => $availableMedicaments,
+                'created_at' => $pharmacy->created_at,
+            ],
+            'medicaments' => $formattedMedicaments,
+        ]);
     }
 }

@@ -3,45 +3,52 @@
 namespace App\Services;
 
 use App\Models\Medicament;
-use DomainException;
+use Exception;
 use Illuminate\Support\Facades\DB;
 
 class InventoryManager
 {
-    /**
-     * Decrease stock with pessimistic locking to prevent race conditions.
-     *
-     * @param Medicament $medicament
-     * @param int $quantity
-     * @return Medicament
-     * @throws DomainException
-     */
-    public function decreaseStockSafely(Medicament $medicament, int $quantity): Medicament
+    public function decreaseStock(Medicament $medicament, int $quantity): Medicament
     {
         if ($quantity <= 0) {
-            throw new DomainException('Quantity must be greater than 0');
+            throw new Exception('Quantity must be greater than 0');
         }
 
         return DB::transaction(function () use ($medicament, $quantity) {
-            // Lock the row for update to prevent concurrent modifications
-            $lockedMedicament = Medicament::lockForUpdate()
-                ->find($medicament->id);
+            $lockedMedicament = Medicament::lockForUpdate()->find($medicament->id);
 
             if (!$lockedMedicament) {
-                throw new DomainException('Medicament not found');
+                throw new Exception('Medicament not found');
             }
 
             if ($lockedMedicament->stock < $quantity) {
-                throw new DomainException(
-                    "Insufficient stock for {$lockedMedicament->name}. " .
-                    "Available: {$lockedMedicament->stock}, Requested: {$quantity}"
-                );
+                throw new Exception("Insufficient stock for {$lockedMedicament->name}");
             }
 
             $lockedMedicament->decrement('stock', $quantity);
-
-            // Return refreshed instance instead of using fresh()
             return $lockedMedicament->refresh();
         });
     }
+<<<<<<< HEAD
 }
+=======
+
+    public function increaseStock(Medicament $medicament, int $quantity): Medicament
+    {
+        if ($quantity <= 0) {
+            throw new Exception('Quantity must be greater than 0');
+        }
+
+        return DB::transaction(function () use ($medicament, $quantity) {
+            $lockedMedicament = Medicament::lockForUpdate()->find($medicament->id);
+            $lockedMedicament->increment('stock', $quantity);
+            return $lockedMedicament->refresh();
+        });
+    }
+
+    public function checkAvailability(Medicament $medicament, int $quantity): bool
+    {
+        return $medicament->stock >= $quantity;
+    }
+}
+>>>>>>> abb3fb790f53f244a146bcee742f47d90d11522a

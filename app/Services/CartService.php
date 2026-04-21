@@ -5,31 +5,25 @@ namespace App\Services;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Medicament;
+<<<<<<< HEAD
 use DomainException;
+=======
+use Exception;
+>>>>>>> abb3fb790f53f244a146bcee742f47d90d11522a
 
 class CartService
 {
-    /**
-     * Add an item to the cart.
-     *
-     * @param Cart $cart
-     * @param int $medicamentId
-     * @param int $quantity
-     * @return CartItem
-     * @throws DomainException
-     */
     public function addItem(Cart $cart, int $medicamentId, int $quantity): CartItem
     {
         if ($quantity <= 0) {
-            throw new DomainException('Quantity must be greater than 0');
+            throw new Exception('Quantity must be greater than 0');
         }
 
         $medicament = Medicament::findOrFail($medicamentId);
-        $existingFirstItem = $cart->items()->with('medicament')->first();
+        $firstItem = $cart->items()->with('medicament')->first();
 
-        // Force one-pharmacy-per-cart to avoid order creation failures at checkout.
-        if ($existingFirstItem && $existingFirstItem->medicament->pharmacy_id !== $medicament->pharmacy_id) {
-            throw new DomainException('Your cart already contains items from another pharmacy.');
+        if ($firstItem && $firstItem->medicament->pharmacy_id !== $medicament->pharmacy_id) {
+            throw new Exception('Your cart already contains items from another pharmacy.');
         }
 
         $existingItem = $cart->items()->where('medicament_id', $medicamentId)->first();
@@ -45,70 +39,45 @@ class CartService
         ]);
     }
 
-    /**
-     * Remove an item from the cart.
-     *
-     * @param CartItem $cartItem
-     * @return bool
-     */
     public function removeItem(CartItem $cartItem): bool
     {
-        return (bool) $cartItem->delete();
+        return $cartItem->delete();
     }
 
-    /**
-     * Update the quantity of a cart item.
-     *
-     * @param CartItem $cartItem
-     * @param int $quantity
-     * @return CartItem
-     * @throws DomainException
-     */
     public function updateQuantity(CartItem $cartItem, int $quantity): CartItem
     {
         if ($quantity <= 0) {
-            throw new DomainException('Quantity must be greater than 0');
+            throw new Exception('Quantity must be greater than 0');
         }
 
         $cartItem->update(['quantity' => $quantity]);
         return $cartItem->fresh();
     }
 
-    /**
-     * Clear all items from the cart.
-     *
-     * @param Cart $cart
-     * @return void
-     */
     public function clearCart(Cart $cart): void
     {
         $cart->items()->delete();
     }
 
-    /**
-     * Calculate the total price of the cart.
-     *
-     * @param Cart $cart
-     * @return float
-     */
     public function calculateTotal(Cart $cart): float
     {
-        return $cart->items()->with('medicament')
-            ->get()
-            ->sum(function (CartItem $item) {
-                return $item->medicament->price * $item->quantity;
-            });
+        $items = $cart->items()->with('medicament')->get();
+        $total = 0;
+        
+        foreach ($items as $item) {
+            $total = $total + ($item->medicament->price * $item->quantity);
+        }
+        
+        return $total;
     }
 
-    /**
-     * Get the item count in the cart.
-     *
-     * @param Cart $cart
-     * @return int
-     */
     public function getItemCount(Cart $cart): int
     {
         return $cart->items()->sum('quantity');
     }
+<<<<<<< HEAD
 
 }
+=======
+}
+>>>>>>> abb3fb790f53f244a146bcee742f47d90d11522a

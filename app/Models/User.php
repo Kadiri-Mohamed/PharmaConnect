@@ -2,14 +2,19 @@
 
 namespace App\Models;
 
+<<<<<<< HEAD
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+=======
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
+>>>>>>> abb3fb790f53f244a146bcee742f47d90d11522a
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     /**
@@ -77,5 +82,13 @@ class User extends Authenticatable implements MustVerifyEmail
     public function prescriptions()
     {
         return $this->hasMany(Prescription::class);
+    }
+
+    /**
+     * Get the rare medicine requests for the user.
+     */
+    public function rareRequests()
+    {
+        return $this->hasMany(RareRequest::class);
     }
 }
