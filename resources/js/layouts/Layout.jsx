@@ -1,4 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
+import MedicineAssistant from '@/components/MedicineAssistant.jsx';
 
 const guestLinks = [
     { href: '/', label: 'Home' },
@@ -35,11 +36,9 @@ export default function Layout({ children }) {
             <nav className="sticky top-0 z-40 border-b border-pharmacy-light/15 bg-pharmacy-deepest/95 backdrop-blur">
                 <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
                     <Link href="/" className="flex items-center gap-3 text-white">
-                        <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-pharmacy-light/25 bg-pharmacy-light/12 text-sm font-bold text-pharmacy-light">
-                            Rx
-                        </span>
+                       
                         <span>
-                            <span className="block text-xl font-bold">Pharma System</span>
+                            <span className="block text-xl font-bold">Pharma Connect</span>
                             <span className="block text-xs uppercase tracking-[0.22em] text-pharmacy-light/70">
                                 Pharmacy platform
                             </span>
@@ -96,6 +95,7 @@ export default function Layout({ children }) {
             </nav>
 
             <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+            <MedicineAssistant />
         </div>
     );
 }
