@@ -30,19 +30,19 @@ export default function Dashboard({ recentOrders = [], cartSummary = { itemCount
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-3">
-                    <div className="page-card bg-gradient-to-br from-pharmacy-light via-white to-pharmacy-lighter/70 hover:scale-[1.02]">
+                    <div className="page-card bg-gradient from-pharmacy-light via-white to-pharmacy-lighter/70 hover:scale-[1.02]">
                         <p className="section-kicker">Cart Items</p>
                         <p className="mt-3 text-3xl font-bold text-pharmacy-dark">{cartSummary.itemCount}</p>
                         <p className="mt-2 text-sm text-slate-600">Items currently waiting for checkout.</p>
                     </div>
-                    <div className="page-card bg-gradient-to-br from-pharmacy-light via-white to-pharmacy-lighter/70 hover:scale-[1.02]">
+                    <div className="page-card bg-gradient from-pharmacy-light via-white to-pharmacy-lighter/70 hover:scale-[1.02]">
                         <p className="section-kicker">Cart Total</p>
                         <p className="mt-3 text-3xl font-bold text-pharmacy-dark">
                             {formatCurrency(cartSummary.totalPrice)}
                         </p>
                         <p className="mt-2 text-sm text-slate-600">A live total based on the items in your cart.</p>
                     </div>
-                    <div className="page-card bg-gradient-to-br from-pharmacy-light via-white to-pharmacy-lighter/70 hover:scale-[1.02]">
+                    <div className="page-card bg-gradient from-pharmacy-light via-white to-pharmacy-lighter/70 hover:scale-[1.02]">
                         <p className="section-kicker">Quick Actions</p>
                         <p className="mt-3 text-lg font-semibold text-pharmacy-deepest">
                             Pick up where you left off.

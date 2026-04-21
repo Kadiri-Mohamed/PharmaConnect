@@ -53,21 +53,21 @@ export default function WelcomePage() {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-3">
-                    <div className="page-card bg-gradient-to-br from-pharmacy-light via-white to-pharmacy-lighter/70">
+                    <div className="page-card bg-gradient from-pharmacy-light via-white to-pharmacy-lighter/70">
                         <h2 className="text-xl font-semibold">Clients</h2>
                         <p className="mt-3 text-sm leading-6 text-slate-600">
                             Find medicaments faster, upload prescription files, and keep your order timeline in one
                             place.
                         </p>
                     </div>
-                    <div className="page-card bg-gradient-to-br from-pharmacy-light via-white to-pharmacy-lighter/70">
+                    <div className="page-card bg-gradient from-pharmacy-light via-white to-pharmacy-lighter/70">
                         <h2 className="text-xl font-semibold">Pharmacists</h2>
                         <p className="mt-3 text-sm leading-6 text-slate-600">
                             Create and maintain your pharmacy profile, manage stock, and update order progress with
                             confidence.
                         </p>
                     </div>
-                    <div className="page-card bg-gradient-to-br from-pharmacy-light via-white to-pharmacy-lighter/70">
+                    <div className="page-card bg-gradient from-pharmacy-light via-white to-pharmacy-lighter/70">
                         <h2 className="text-xl font-semibold">Fulfillment</h2>
                         <p className="mt-3 text-sm leading-6 text-slate-600">
                             Keep operations clearer with dedicated flows for prescriptions, rare requests, and order
