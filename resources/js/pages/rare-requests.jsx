@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import FlashMessages from '@/components/FlashMessages.jsx';
 import FormError from '@/components/FormError.jsx';
@@ -59,7 +59,7 @@ export default function RareRequestsPage({ requests = [] }) {
                 {auth?.user && (
                     <div className="table-card">
                         <div className="border-b border-pharmacy-light/70 px-6 py-5">
-                            <h2 className="text-lg font-semibold">Requests</h2>
+                            <h2 className="text-lg font-semibold">Your requests</h2>
                         </div>
                         {requests.length === 0 ? (
                             <p className="px-6 py-5 text-sm text-slate-500">No requests yet.</p>
@@ -89,7 +89,29 @@ export default function RareRequestsPage({ requests = [] }) {
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3 text-slate-600">
-                                                    {request.found_by_pharmacy?.name || '-'}
+                                                    {request.found_by_pharmacy ? (
+                                                        <div className="space-y-2">
+                                                            <div>
+                                                                <p className="font-semibold text-pharmacy-deepest">
+                                                                    {request.found_by_pharmacy.name}
+                                                                </p>
+                                                                <p className="text-xs text-slate-500">
+                                                                    {request.found_by_pharmacy.address}
+                                                                </p>
+                                                                <p className="text-xs text-slate-500">
+                                                                    {request.found_by_pharmacy.phone}
+                                                                </p>
+                                                            </div>
+                                                            <Link
+                                                                href={`/pharmacies/${request.found_by_pharmacy.id}`}
+                                                                className="link-primary text-xs"
+                                                            >
+                                                                View pharmacy details
+                                                            </Link>
+                                                        </div>
+                                                    ) : (
+                                                        '-'
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
