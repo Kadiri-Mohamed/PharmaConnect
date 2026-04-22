@@ -2,12 +2,8 @@
 
 namespace App\Models;
 
-<<<<<<< HEAD
 use Illuminate\Contracts\Auth\MustVerifyEmail;
-=======
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
->>>>>>> abb3fb790f53f244a146bcee742f47d90d11522a
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;

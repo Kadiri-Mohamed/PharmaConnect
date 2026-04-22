@@ -5,11 +5,7 @@ namespace App\Services;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Medicament;
-<<<<<<< HEAD
-use DomainException;
-=======
 use Exception;
->>>>>>> abb3fb790f53f244a146bcee742f47d90d11522a
 
 class CartService
 {
@@ -75,9 +71,4 @@ class CartService
     {
         return $cart->items()->sum('quantity');
     }
-<<<<<<< HEAD
-
 }
-=======
-}
->>>>>>> abb3fb790f53f244a146bcee742f47d90d11522a

@@ -3,10 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AddToCartRequest;
-<<<<<<< HEAD
-=======
 use App\Http\Requests\UpdateCartItemRequest;
->>>>>>> abb3fb790f53f244a146bcee742f47d90d11522a
 use App\Models\CartItem;
 use App\Services\CartService;
 use Exception;

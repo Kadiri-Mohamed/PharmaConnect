@@ -29,9 +29,6 @@ class InventoryManager
             return $lockedMedicament->refresh();
         });
     }
-<<<<<<< HEAD
-}
-=======
 
     public function increaseStock(Medicament $medicament, int $quantity): Medicament
     {
@@ -51,4 +48,3 @@ class InventoryManager
         return $medicament->stock >= $quantity;
     }
 }
->>>>>>> abb3fb790f53f244a146bcee742f47d90d11522a
