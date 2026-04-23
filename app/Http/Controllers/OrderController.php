@@ -85,6 +85,7 @@ class OrderController extends Controller
                 'prescription' => $order->prescription ? [
                     'id' => $order->prescription->id,
                     'status' => $order->prescription->status,
+                    'file_url' => route('prescriptions.file', $order->prescription),
                 ] : null,
                 'items' => $orderItems,
             ],
@@ -147,7 +148,11 @@ class OrderController extends Controller
                 'status' => $order->status,
                 'total_price' => $order->total_price,
                 'created_at' => $order->created_at,
-                'prescription' => $order->prescription,
+                'prescription' => $order->prescription ? [
+                    'id' => $order->prescription->id,
+                    'status' => $order->prescription->status,
+                    'file_url' => route('prescriptions.file', $order->prescription),
+                ] : null,
                 'items' => $items,
             ];
         }

@@ -25,6 +25,7 @@ const rareRequestStatusClasses = {
 
 const prescriptionStatusClasses = {
     pending: orderStatusClasses.pending,
+    validated: successBadge,
     approved: successBadge,
     accepted: successBadge,
     rejected: errorBadge,

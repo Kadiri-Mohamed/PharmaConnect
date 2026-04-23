@@ -18,6 +18,7 @@ class OrderService
     {
         return DB::transaction(function () use ($user, $pharmacyId) {
             $cart = $user->cart;
+            $prescription = null;
             
             if (!$cart) {
                 throw new Exception('Cart not found');
@@ -50,9 +51,13 @@ class OrderService
             }
             
             if ($needsPrescription) {
-                $hasValidPrescription = $user->prescriptions()->whereIn('status', ['pending', 'validated'])->doesntHave('orders')->exists();
-                    
-                if (!$hasValidPrescription) {
+                $prescription = $user->prescriptions()
+                    ->whereIn('status', ['pending', 'validated'])
+                    ->doesntHave('orders')
+                    ->latest('id')
+                    ->first();
+
+                if (!$prescription) {
                     throw new Exception('Prescription required for some items');
                 }
             }
@@ -65,6 +70,7 @@ class OrderService
             $order = Order::create([
                 'user_id' => $user->id,
                 'pharmacy_id' => $pharmacyId,
+                'prescription_id' => $prescription?->id,
                 'status' => 'pending',
                 'total_price' => $totalPrice,
             ]);

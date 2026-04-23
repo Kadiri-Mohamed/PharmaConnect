@@ -12,11 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('rare_requests', function (Blueprint $table) {
-            $table->foreignId('found_by_pharmacy_id')
-                ->nullable()
-                ->after('status')
-                ->constrained('pharmacies')
-                ->nullOnDelete();
+            $table->foreignId('found_by_pharmacy_id')->nullable()->after('status')->constrained('pharmacies')->nullOnDelete();
         });
     }
 

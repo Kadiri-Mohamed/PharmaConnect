@@ -39,7 +39,6 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
 
         // Prescriptions
-        Route::get('/prescriptions', [PrescriptionController::class, 'index'])->name('prescriptions');
         Route::post('/prescriptions', [PrescriptionController::class, 'store'])->name('prescriptions.store');
 
         // Rare requests

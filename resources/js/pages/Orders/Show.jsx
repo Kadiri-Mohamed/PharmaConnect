@@ -64,6 +64,16 @@ export default function OrderShowPage({ order }) {
                                         : 'Not attached'}
                                 </span>
                             </div>
+                            {order.prescription?.file_url && (
+                                <a
+                                    href={order.prescription.file_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="link-primary inline-flex"
+                                >
+                                    Open prescription
+                                </a>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -10,65 +10,45 @@ use Inertia\Inertia;
 
 class PrescriptionController extends Controller
 {
-    public function index()
-    {
-        $prescriptions = auth()->user()->prescriptions()->latest()->get();
-        
-        $formattedPrescriptions = [];
-        foreach ($prescriptions as $prescription) {
-            $formattedPrescriptions[] = [
-                'id' => $prescription->id,
-                'image' => $prescription->image,
-                'status' => $prescription->status,
-                'created_at' => $prescription->created_at,
-                'file_url' => route('prescriptions.file', $prescription),
-            ];
-        }
-        
-        return Inertia::render('prescriptions', [
-            'prescriptions' => $formattedPrescriptions,
-        ]);
-    }
-    
     public function store(StorePrescriptionRequest $request)
     {
         $path = $request->file('image')->store('prescriptions', 'public');
-        
+
         Prescription::create([
             'user_id' => $request->user()->id,
             'image' => $path,
             'status' => 'pending',
         ]);
-        
+
         return back()->with('success', 'Prescription uploaded successfully.');
     }
-    
+
     public function file(Prescription $prescription)
     {
         $user = auth()->user();
-        
+
         if (!$user) {
             abort(403);
         }
-        
+
         $canAccess = false;
-        
+
         if ($user->role === 'client' && $prescription->user_id === $user->id) {
             $canAccess = true;
         }
-        
+
         if ($user->role === 'pharmacien' && $user->pharmacy) {
             $hasOrder = $user->pharmacy->orders()->where('prescription_id', $prescription->id)->exists();
-            
+
             if ($hasOrder) {
                 $canAccess = true;
             }
         }
-        
+
         if (!$canAccess) {
             abort(403);
         }
-        
+
         return Storage::disk('public')->response($prescription->image);
     }
 }

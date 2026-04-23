@@ -2,7 +2,12 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import FlashMessages from '@/components/FlashMessages.jsx';
 import Layout from '@/layouts/Layout.jsx';
-import { formatCurrency, formatStatusLabel, getOrderStatusBadgeClass } from '@/utils/ui.js';
+import {
+    formatCurrency,
+    formatStatusLabel,
+    getOrderStatusBadgeClass,
+    getPrescriptionStatusBadgeClass,
+} from '@/utils/ui.js';
 
 const statuses = ['pending', 'preparing', 'ready', 'delivered', 'cancelled'];
 
@@ -45,6 +50,7 @@ export default function PharmacienOrdersPage({ orders = [] }) {
                                         <th className="px-4 py-3 font-semibold">Order</th>
                                         <th className="px-4 py-3 font-semibold">Client</th>
                                         <th className="px-4 py-3 font-semibold">Items</th>
+                                        <th className="px-4 py-3 font-semibold">Prescription</th>
                                         <th className="px-4 py-3 font-semibold">Total</th>
                                         <th className="px-4 py-3 font-semibold">Current Status</th>
                                         <th className="px-4 py-3 font-semibold">Update Status</th>
@@ -62,6 +68,31 @@ export default function PharmacienOrdersPage({ orders = [] }) {
                                                 {order.items
                                                     .map((item) => `${item.name} (${item.quantity})`)
                                                     .join(', ')}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {order.prescription ? (
+                                                    <div className="flex min-w-36 flex-col gap-2">
+                                                        <span
+                                                            className={getPrescriptionStatusBadgeClass(
+                                                                order.prescription.status,
+                                                            )}
+                                                        >
+                                                            {formatStatusLabel(order.prescription.status)}
+                                                        </span>
+                                                        <a
+                                                            href={order.prescription.file_url}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="link-primary text-sm"
+                                                        >
+                                                            View prescription
+                                                        </a>
+                                                    </div>
+                                                ) : (
+                                                    <span className={getPrescriptionStatusBadgeClass('not_attached')}>
+                                                        Not attached
+                                                    </span>
+                                                )}
                                             </td>
                                             <td className="px-4 py-3 font-semibold text-pharmacy-dark">
                                                 {formatCurrency(order.total_price)}
