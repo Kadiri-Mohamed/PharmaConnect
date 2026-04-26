@@ -9,11 +9,6 @@ class Order extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'user_id',
         'pharmacy_id',
@@ -22,11 +17,6 @@ class Order extends Model
         'total_price',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -34,33 +24,21 @@ class Order extends Model
         ];
     }
 
-    /**
-     * Get the user that owns the order.
-     */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Get the pharmacy for the order.
-     */
     public function pharmacy()
     {
         return $this->belongsTo(Pharmacy::class);
     }
 
-    /**
-     * Get the items in the order.
-     */
     public function items()
     {
         return $this->hasMany(OrderItem::class);
     }
 
-    /**
-     * Get the prescription attached to the order (if any).
-     */
     public function prescription()
     {
         return $this->belongsTo(Prescription::class);

@@ -10,11 +10,6 @@ class RareRequest extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'user_id',
         'medicine_name',
@@ -23,17 +18,11 @@ class RareRequest extends Model
         'found_by_pharmacy_id',
     ];
 
-    /**
-     * Get the user that created the rare request.
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Get the pharmacy that found the requested medicine.
-     */
     public function foundByPharmacy(): BelongsTo
     {
         return $this->belongsTo(Pharmacy::class, 'found_by_pharmacy_id');

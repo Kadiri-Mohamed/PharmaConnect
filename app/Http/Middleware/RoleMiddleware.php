@@ -14,12 +14,6 @@ class RoleMiddleware
             abort(403, 'Unauthorized action.');
         }
 
-        if ($role === 'pharmacien' && !$request->routeIs('pharmacy.create', 'pharmacy.store')) {
-            if (!$request->user()->pharmacy) {
-                return redirect()->route('pharmacy.create');
-            }
-        }
-
         return $next($request);
     }
 }
